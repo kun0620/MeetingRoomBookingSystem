@@ -46,7 +46,7 @@ export default function RoomCard({ room, onSelect, isSelected = false, submittin
       }`}
     >
       <div className={`h-32 rounded-t-xl bg-gradient-to-br ${roomColor} flex items-center justify-center`}>
-        <div className="text-center text-white">
+        <div className="text-center text-black">
           <h3 className="text-2xl font-bold mb-2">{roomName}</h3>
           <div className="flex items-center justify-center text-white/90">
             <Users className="w-5 h-5 mr-2" />
