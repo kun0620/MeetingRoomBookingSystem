@@ -19,5 +19,25 @@
   <body>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
+<!-- เพิ่มใน public/index.html ก่อน </body> -->
+<script>
+window.addEventListener('load', function() {
+  setTimeout(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    
+    if (urlParams.get('page') === 'management') {
+      // หาปุ่ม "จัดการการจอง" แล้วคลิก
+      const managementBtn = Array.from(document.querySelectorAll('button')).find(btn => 
+        btn.textContent?.includes('จัดการการจอง')
+      );
+      
+      if (managementBtn) {
+        managementBtn.click();
+        console.log('✅ Auto-clicked Management button');
+      }
+    }
+  }, 500); // รอ React render เสร็จ
+});
+</script>
   </body>
 </html>
