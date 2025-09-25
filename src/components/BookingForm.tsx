@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Room, Booking } from '../types';
-import { User, Mail, Phone, FileText, Calendar } from 'lucide-react';
+import { User, Mail, Phone, FileText, Calendar, Loader2 } from 'lucide-react';
 import { formatDateThai } from '../utils/dateUtils';
 
 interface BookingFormProps {
@@ -10,6 +10,7 @@ interface BookingFormProps {
   selectedEndTime: string;
   onSubmit: (booking: Omit<Booking, 'id' | 'created_at'>) => void;
   onCancel: () => void;
+  submitting?: boolean;
 }
 
 export default function BookingForm({
@@ -18,7 +19,8 @@ export default function BookingForm({
   selectedStartTime,
   selectedEndTime,
   onSubmit,
-  onCancel
+  onCancel,
+  submitting = false
 }: BookingFormProps) {
   const [formData, setFormData] = useState({
     user_name: '',
@@ -199,15 +201,24 @@ export default function BookingForm({
           <button
             type="button"
             onClick={onCancel}
-            className="flex-1 px-6 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors font-medium"
+            disabled={submitting}
+            className="flex-1 px-6 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed"
           >
             ยกเลิก
           </button>
           <button
             type="submit"
-            className="flex-1 px-6 py-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors font-medium"
+            disabled={submitting}
+            className="flex-1 px-6 py-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
           >
-            ยืนยันการจอง
+            {submitting ? (
+              <>
+                <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                กำลังจอง...
+              </>
+            ) : (
+              'ยืนยันการจอง'
+            )}
           </button>
         </div>
       </form>

@@ -1,26 +1,28 @@
 import React, { useState, useEffect } from 'react';
 import { Room, Booking, TimeSlot } from './types';
-import { rooms } from './data/rooms';
 import { timeSlots } from './utils/timeSlots';
 import { formatDate, isPastDate } from './utils/dateUtils';
-import { useLocalStorage } from './hooks/useLocalStorage';
+import { useRooms } from './hooks/useRooms';
+import { useBookings } from './hooks/useBookings';
 import RoomCard from './components/RoomCard';
 import Calendar from './components/Calendar';
 import TimeSlots from './components/TimeSlots';
 import BookingForm from './components/BookingForm';
 import BookingList from './components/BookingList';
-import { CalendarDays, Building, LineChart, MessageSquare } from 'lucide-react';
+import { CalendarDays, Building, LineChart, MessageSquare, Loader2, AlertCircle } from 'lucide-react';
 
 type ViewMode = 'booking' | 'management';
 
 function App() {
-  const [bookings, setBookings] = useLocalStorage<Booking[]>('meeting-room-bookings', []);
+  const { rooms, loading: roomsLoading, error: roomsError } = useRooms();
+  const { bookings, loading: bookingsLoading, error: bookingsError, createBooking, cancelBooking } = useBookings();
   const [selectedRoom, setSelectedRoom] = useState<Room | null>(null);
   const [selectedDate, setSelectedDate] = useState<string>(formatDate(new Date()));
   const [selectedStartTime, setSelectedStartTime] = useState<string>('');
   const [selectedEndTime, setSelectedEndTime] = useState<string>('');
   const [showBookingForm, setShowBookingForm] = useState(false);
   const [viewMode, setViewMode] = useState<ViewMode>('booking');
+  const [submitting, setSubmitting] = useState(false);
 
   // Reset selections when switching rooms
   useEffect(() => {
@@ -70,33 +72,58 @@ function App() {
     }
   };
 
-  const handleBookingSubmit = (bookingData: Omit<Booking, 'id' | 'created_at'>) => {
-    const newBooking: Booking = {
-      ...bookingData,
-      id: Date.now().toString(),
-      created_at: new Date().toISOString()
-    };
-    
-    setBookings(prev => [...prev, newBooking]);
-    setShowBookingForm(false);
-    setSelectedStartTime('');
-    setSelectedEndTime('');
-    
-    // Show success message (could be replaced with a proper toast notification)
-    alert('จองห้องประชุมสำเร็จ!');
+  const handleBookingSubmit = async (bookingData: Omit<Booking, 'id' | 'created_at'>) => {
+    try {
+      setSubmitting(true);
+      await createBooking(bookingData);
+      setShowBookingForm(false);
+      setSelectedStartTime('');
+      setSelectedEndTime('');
+      alert('จองห้องประชุมสำเร็จ!');
+    } catch (error) {
+      alert(`เกิดข้อผิดพลาด: ${error instanceof Error ? error.message : 'ไม่สามารถจองห้องได้'}`);
+    } finally {
+      setSubmitting(false);
+    }
   };
 
-  const handleCancelBooking = (bookingId: string) => {
+  const handleCancelBooking = async (bookingId: string) => {
     if (confirm('คุณต้องการยกเลิกการจองนี้หรือไม่?')) {
-      setBookings(prev => prev.map(booking =>
-        booking.id === bookingId 
-          ? { ...booking, status: 'cancelled' as const }
-          : booking
-      ));
+      try {
+        await cancelBooking(bookingId);
+        alert('ยกเลิกการจองสำเร็จ!');
+      } catch (error) {
+        alert(`เกิดข้อผิดพลาด: ${error instanceof Error ? error.message : 'ไม่สามารถยกเลิกการจองได้'}`);
+      }
     }
   };
 
   const canProceedToBooking = selectedRoom && selectedDate && selectedStartTime && selectedEndTime;
+
+  // Loading state
+  if (roomsLoading || bookingsLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <Loader2 className="w-8 h-8 animate-spin mx-auto mb-4 text-blue-500" />
+          <p className="text-gray-600">กำลังโหลดข้อมูล...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Error state
+  if (roomsError || bookingsError) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <AlertCircle className="w-8 h-8 mx-auto mb-4 text-red-500" />
+          <p className="text-red-600 mb-4">เกิดข้อผิดพลาดในการโหลดข้อมูล</p>
+          <p className="text-gray-600">{roomsError || bookingsError}</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -159,6 +186,7 @@ function App() {
                         room={room}
                         onSelect={setSelectedRoom}
                         isSelected={selectedRoom?.id === room.id}
+                        submitting={submitting}
                       />
                     ))}
                   </div>
@@ -224,7 +252,7 @@ function App() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <div className="text-center text-gray-500">
             <p className="mb-2">ระบบจองห้องประชุมออนไลน์</p>
-            <p className="text-sm">สำหรับการเชื่อมต่อ LINE Official Account กรุณาติดต่อผู้ดูแลระบบ</p>
+            <p className="text-sm">ระบบออนไลน์พร้อมใช้งาน - ข้อมูลจะถูกเก็บไว้อย่างปลอดภัย</p>
           </div>
         </div>
       </footer>

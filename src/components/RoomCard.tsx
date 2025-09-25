@@ -6,6 +6,7 @@ interface RoomCardProps {
   room: Room;
   onSelect: (room: Room) => void;
   isSelected?: boolean;
+  submitting?: boolean;
 }
 
 const getAmenityIcon = (amenity: string) => {
@@ -24,12 +25,14 @@ const getAmenityIcon = (amenity: string) => {
   }
 };
 
-export default function RoomCard({ room, onSelect, isSelected = false }: RoomCardProps) {
+export default function RoomCard({ room, onSelect, isSelected = false, submitting = false }: RoomCardProps) {
   return (
     <div
-      onClick={() => onSelect(room)}
-      className={`bg-white rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 cursor-pointer transform hover:-translate-y-1 ${
+      onClick={() => !submitting && onSelect(room)}
+      className={`bg-white rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 cursor-pointer ${
         isSelected ? 'ring-2 ring-blue-500 ring-offset-2' : ''
+      } ${
+        submitting ? 'cursor-not-allowed opacity-50' : ''
       }`}
     >
       <div className={`h-32 rounded-t-xl bg-gradient-to-br ${room.color} flex items-center justify-center`}>
