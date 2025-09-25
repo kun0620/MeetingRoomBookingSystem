@@ -26,6 +26,16 @@ const getAmenityIcon = (amenity: string) => {
 };
 
 export default function RoomCard({ room, onSelect, isSelected = false, submitting = false }: RoomCardProps) {
+  // Debug log to check room data
+  console.log('Room data:', room);
+  
+  // Fallback values in case data is missing
+  const roomName = room?.name || 'ห้องประชุม';
+  const roomCapacity = room?.capacity || 0;
+  const roomColor = room?.color || 'from-blue-500 to-blue-600';
+  const roomDescription = room?.description || 'ห้องประชุมสำหรับการประชุม';
+  const roomAmenities = room?.amenities || [];
+
   return (
     <div
       onClick={() => !submitting && onSelect(room)}
@@ -35,23 +45,23 @@ export default function RoomCard({ room, onSelect, isSelected = false, submittin
         submitting ? 'cursor-not-allowed opacity-50' : ''
       }`}
     >
-      <div className={`h-32 rounded-t-xl bg-gradient-to-br ${room.color} flex items-center justify-center`}>
+      <div className={`h-32 rounded-t-xl bg-gradient-to-br ${roomColor} flex items-center justify-center`}>
         <div className="text-center text-white">
-          <h3 className="text-2xl font-bold mb-2">{room.name}</h3>
+          <h3 className="text-2xl font-bold mb-2">{roomName}</h3>
           <div className="flex items-center justify-center text-white/90">
             <Users className="w-5 h-5 mr-2" />
-            <span className="text-lg font-medium">สูงสุด {room.capacity} คน</span>
+            <span className="text-lg font-medium">สูงสุด {roomCapacity} คน</span>
           </div>
         </div>
       </div>
       
       <div className="p-6">
-        <p className="text-gray-600 mb-4 leading-relaxed">{room.description}</p>
+        <p className="text-gray-600 mb-4 leading-relaxed">{roomDescription}</p>
         
         <div className="space-y-3">
           <h4 className="font-semibold text-gray-800 text-sm uppercase tracking-wide">สิ่งอำนวยความสะดวก</h4>
           <div className="grid grid-cols-2 gap-2">
-            {room.amenities.map((amenity, index) => (
+            {roomAmenities.map((amenity, index) => (
               <div key={index} className="flex items-center text-gray-600 text-sm">
                 {getAmenityIcon(amenity)}
                 <span className="ml-2">{amenity}</span>

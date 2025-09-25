@@ -21,8 +21,10 @@ export function useRooms() {
 
       if (error) throw error;
 
+      console.log('Fetched rooms data:', data);
       setRooms(data || []);
     } catch (err) {
+      console.error('Error fetching rooms:', err);
       setError(err instanceof Error ? err.message : 'เกิดข้อผิดพลาดในการโหลดข้อมูลห้อง');
     } finally {
       setLoading(false);

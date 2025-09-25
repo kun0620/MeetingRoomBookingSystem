@@ -114,12 +114,19 @@ function App() {
 
   // Error state
   if (roomsError || bookingsError) {
+    console.error('App errors:', { roomsError, bookingsError });
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
           <AlertCircle className="w-8 h-8 mx-auto mb-4 text-red-500" />
           <p className="text-red-600 mb-4">เกิดข้อผิดพลาดในการโหลดข้อมูล</p>
           <p className="text-gray-600">{roomsError || bookingsError}</p>
+          <button 
+            onClick={() => window.location.reload()} 
+            className="mt-4 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600"
+          >
+            รีเฟรชหน้า
+          </button>
         </div>
       </div>
     );
