@@ -1,12 +1,14 @@
 import React, { useState } from 'react';
-import { 
-  Users, 
-  Building, 
-  Calendar, 
-  Settings, 
-  BarChart3, 
+import {
+  Users,
+  Building,
+  Calendar,
+  Settings,
+  BarChart3,
   LogOut,
-  Home
+  Home,
+  Menu, // Import Menu icon for mobile toggle
+  X // Import X icon for closing sidebar on mobile
 } from 'lucide-react';
 import { User } from '../../types';
 import AdminRooms from './AdminRooms';
@@ -24,6 +26,7 @@ type AdminView = 'stats' | 'rooms' | 'bookings' | 'users' | 'settings';
 
 export default function AdminDashboard({ user, onLogout, onBackToMain }: AdminDashboardProps) {
   const [currentView, setCurrentView] = useState<AdminView>('stats');
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false); // State for sidebar visibility
 
   const menuItems = [
     { id: 'stats' as AdminView, label: 'สถิติ', icon: BarChart3 },
@@ -57,76 +60,132 @@ export default function AdminDashboard({ user, onLogout, onBackToMain }: AdminDa
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <header className="bg-white shadow-sm border-b">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center py-4">
-            <div className="flex items-center">
-              <Settings className="w-8 h-8 text-blue-500 mr-3" />
+      {/* Sidebar Backdrop for mobile */}
+      {isSidebarOpen && (
+        <div
+          className="fixed inset-0 bg-black bg-opacity-50 z-40 lg:hidden"
+          onClick={() => setIsSidebarOpen(false)}
+        ></div>
+      )}
+
+      {/* Sidebar */}
+      <aside
+        className={`fixed top-0 left-0 bg-white text-gray-900 h-screen transition-transform duration-300 ease-in-out z-50 border-r border-gray-200
+          w-[290px]
+          ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'}
+          lg:translate-x-0`} // On large screens, it's always visible and fixed
+      >
+        <div className="py-4 px-6 flex items-center justify-between border-b border-gray-200 lg:justify-start">
+          <div className="flex items-center">
+            <Settings className="w-7 h-7 text-blue-500 mr-2" />
+            <h1 className="text-xl font-bold text-gray-900">แอดมิน</h1>
+          </div>
+          <button
+            onClick={() => setIsSidebarOpen(false)}
+            className="lg:hidden p-2 rounded-md text-gray-600 hover:bg-gray-100"
+          >
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+
+        <div className="flex flex-col overflow-y-auto duration-300 ease-linear no-scrollbar p-6">
+          <nav className="mb-6">
+            <div className="flex flex-col gap-4">
               <div>
-                <h1 className="text-2xl font-bold text-gray-900">แอดมิน</h1>
-                <p className="text-sm text-gray-500">ระบบจัดการ</p>
+                <h2 className="mb-4 text-xs uppercase flex leading-[20px] text-gray-400 justify-start">เมนู</h2>
+                <ul className="flex flex-col gap-2">
+                  {menuItems.map((item) => {
+                    const Icon = item.icon;
+                    return (
+                      <li key={item.id}>
+                        <button
+                          onClick={() => {
+                            setCurrentView(item.id);
+                            setIsSidebarOpen(false); // Close sidebar on item click for mobile
+                          }}
+                          className={`flex items-center w-full px-4 py-2 rounded-lg font-medium transition-colors group
+                            ${
+                              currentView === item.id
+                                ? 'bg-blue-500 text-white'
+                                : 'text-gray-700 hover:bg-gray-100'
+                            }`}
+                        >
+                          <Icon className={`w-4 h-4 mr-3 ${currentView === item.id ? 'text-white' : 'text-gray-500 group-hover:text-blue-500'}`} />
+                          <span className={`${currentView === item.id ? 'text-white' : 'text-gray-700 group-hover:text-gray-900'}`}>{item.label}</span>
+                        </button>
+                      </li>
+                    );
+                  })}
+                </ul>
               </div>
             </div>
-            
-            <div className="flex items-center space-x-4">
-              <div className="text-right">
-                <p className="text-sm font-medium text-gray-900">{user.name}</p>
+          </nav>
+
+          {/* User info, Home, Logout buttons moved to sidebar for consistency */}
+          <div className="mt-auto pt-6 border-t border-gray-200">
+            <div className="flex items-center mb-4">
+              <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center mr-3">
+                <Users className="w-4 h-4 text-blue-600" />
+              </div>
+              <div>
+                <p className="text-sm font-medium text-gray-900">{user.name || 'ผู้ดูแลระบบ'}</p>
                 <p className="text-xs text-gray-500">{user.email}</p>
               </div>
-              
-              <button
-                onClick={onBackToMain}
-                className="flex items-center px-3 py-2 text-gray-600 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-                title="กลับสู่หน้าหลัก"
-              >
-                <Home className="w-4 h-4" />
-              </button>
-              
-              <button
-                onClick={onLogout}
-                className="flex items-center px-3 py-2 text-red-600 hover:text-red-700 hover:bg-red-50 rounded-lg transition-colors"
-                title="ออกจากระบบ"
-              >
-                <LogOut className="w-4 h-4" />
-              </button>
             </div>
+
+            <button
+              onClick={onBackToMain}
+              className="flex items-center w-full px-4 py-2 text-gray-600 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors mb-2"
+              title="กลับสู่หน้าหลัก"
+            >
+              <Home className="w-4 h-4 mr-3" />
+              <span>หน้าหลัก</span>
+            </button>
+
+            <button
+              onClick={onLogout}
+              className="flex items-center w-full px-4 py-2 text-red-600 hover:text-red-700 hover:bg-red-50 rounded-lg transition-colors"
+              title="ออกจากระบบ"
+            >
+              <LogOut className="w-4 h-4 mr-3" />
+              <span>ออกจากระบบ</span>
+            </button>
           </div>
         </div>
-      </header>
+      </aside>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="flex gap-8">
-          {/* Sidebar */}
-          <div className="w-64 flex-shrink-0">
-            <nav className="bg-white rounded-xl shadow-lg p-4">
-              <ul className="space-y-2">
-                {menuItems.map((item) => {
-                  const Icon = item.icon;
-                  return (
-                    <li key={item.id}>
-                      <button
-                        onClick={() => setCurrentView(item.id)}
-                        className={`w-full flex items-center px-4 py-3 text-left rounded-lg transition-colors ${
-                          currentView === item.id
-                            ? 'bg-blue-500 text-white'
-                            : 'text-gray-700 hover:bg-gray-100'
-                        }`}
-                      >
-                        <Icon className="w-5 h-5 mr-3" />
-                        {item.label}
-                      </button>
-                    </li>
-                  );
-                })}
-              </ul>
-            </nav>
+      {/* Main content area */}
+      <div className="flex-1 lg:ml-[290px]"> {/* Added lg:ml-[290px] to push content right on large screens */}
+        {/* Header for main content (now includes sidebar toggle for mobile) */}
+        <header className="bg-white shadow-sm border-b">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="flex items-center justify-between py-4">
+              {/* Left section: Admin title and mobile menu button */}
+              <div className="flex items-center">
+                <button
+                  onClick={() => setIsSidebarOpen(true)}
+                  className="lg:hidden p-2 rounded-md text-gray-600 hover:bg-gray-100 mr-3"
+                >
+                  <Menu className="w-5 h-5" />
+                </button>
+                <div className="hidden lg:flex items-center"> {/* Hide on mobile, show on lg+ */}
+                  <Settings className="w-8 h-8 text-blue-500 mr-3" />
+                  <div>
+                    <h1 className="text-2xl font-bold text-gray-900">แอดมิน</h1>
+                    <p className="text-sm text-gray-500">ระบบจัดการ</p>
+                  </div>
+                </div>
+                <div className="lg:hidden"> {/* Show on mobile, hide on lg+ */}
+                  <h1 className="text-xl font-bold text-gray-900">แอดมิน</h1>
+                  <p className="text-sm text-gray-500">ระบบจัดการ</p>
+                </div>
+              </div>
+            </div>
           </div>
+        </header>
 
-          {/* Main Content */}
-          <div className="flex-1">
-            {renderContent()}
-          </div>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          {renderContent()}
         </div>
       </div>
     </div>

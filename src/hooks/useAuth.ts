@@ -1,6 +1,6 @@
-import { useState, useEffect, useRef } from 'react'; // Import useRef
+import { useState, useEffect, useRef } from 'react';
 import { supabase } from '../lib/supabase';
-import { User, DepartmentCode } from '../types'; // Import DepartmentCode type
+import { User, DepartmentCode } from '../types';
 
 export function useAuth() {
   // State for Supabase Auth users (e.g., regular users)
@@ -13,14 +13,14 @@ export function useAuth() {
   const [departmentCodeLoading, setDepartmentCodeLoading] = useState(false);
   const [departmentCodeError, setDepartmentCodeError] = useState<string | null>(null);
 
-  const mounted = useRef(false); // Add a ref to track mounted state
+  const mounted = useRef(false);
 
   useEffect(() => {
-    mounted.current = true; // Set to true when component mounts
+    mounted.current = true;
 
     // Listener for Supabase Auth changes (for regular users)
     const { data: authListener } = supabase.auth.onAuthStateChange((_event, session) => {
-      if (mounted.current) { // Only update if mounted
+      if (mounted.current) {
         if (session) {
           fetchUserProfile(session.user.id);
         } else {
@@ -32,7 +32,7 @@ export function useAuth() {
 
     // Initial check for Supabase Auth session
     const initAuth = async () => {
-      if (mounted.current) { // Only run if mounted
+      if (mounted.current) {
         await checkSessionAndFetchUser();
       }
     };
@@ -42,7 +42,7 @@ export function useAuth() {
     const storedAdmin = localStorage.getItem('department_code_admin');
     if (storedAdmin) {
       try {
-        if (mounted.current) { // Only update if mounted
+        if (mounted.current) {
           setDepartmentCodeAdmin(JSON.parse(storedAdmin));
         }
       } catch (e) {
@@ -52,7 +52,7 @@ export function useAuth() {
     }
 
     return () => {
-      mounted.current = false; // Set to false when component unmounts
+      mounted.current = false;
       authListener.subscription.unsubscribe();
     };
   }, []);
@@ -60,14 +60,20 @@ export function useAuth() {
   const fetchUserProfile = async (userId: string) => {
     try {
       if (mounted.current) setSupabaseLoading(true);
+      // Removed .single() to avoid 406 error if no row or multiple rows are returned
       const { data, error } = await supabase
         .from('users')
         .select('*')
-        .eq('id', userId)
-        .single();
+        .eq('id', userId);
 
       if (error) throw error;
-      if (mounted.current) setSupabaseUser(data);
+
+      // Check if data is an array and has at least one element
+      if (data && data.length > 0) {
+        if (mounted.current) setSupabaseUser(data[0]);
+      } else {
+        if (mounted.current) setSupabaseUser(null);
+      }
     } catch (err) {
       console.error('Error fetching user profile:', err);
       if (mounted.current) setSupabaseError(err instanceof Error ? err.message : 'Failed to fetch user profile');
@@ -127,7 +133,7 @@ export function useAuth() {
         .from('department_codes')
         .select('*')
         .eq('code', code)
-        .single();
+        .single(); // Keep .single() here as we expect a unique department code
 
       if (error) {
         if (error.code === 'PGRST116') { // No rows found
@@ -188,10 +194,10 @@ export function useAuth() {
     user: supabaseUser || departmentCodeAdmin, // Prioritize Supabase user if both exist, or department code admin
     loading: supabaseLoading || departmentCodeLoading,
     error: supabaseError || departmentCodeError,
-    loginWithEmailPassword, // Keep if regular user login is needed
-    loginAdminWithDepartmentCode, // New admin login function
+    loginWithEmailPassword,
+    loginAdminWithDepartmentCode,
     logout,
     isAdmin,
-    refetch: checkSessionAndFetchUser // Refetch Supabase user profile
+    refetch: checkSessionAndFetchUser
   };
 }

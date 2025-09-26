@@ -29,8 +29,8 @@ export function useAdminRooms() {
     }
   };
 
-  // Change signature to omit 'id' for creation, as it's auto-generated
-  const createRoom = async (roomData: Omit<Room, 'id' | 'created_at'>) => {
+  // Change signature to expect 'id' for creation, as it's client-generated
+  const createRoom = async (roomData: Omit<Room, 'created_at'>) => {
     try {
       const { data, error } = await supabase
         .from('rooms')

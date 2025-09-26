@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useBookings } from '../../hooks/useBookings';
 import { useRooms } from '../../hooks/useRooms';
-import { Calendar, Clock, User, Phone, Mail, X, Search, Filter, Loader2 } from 'lucide-react';
+import { Calendar, Clock, User, Phone, Mail, X, Search, Filter, Loader2, ChevronDown, ChevronUp } from 'lucide-react';
 import { formatDateThai } from '../../utils/dateUtils';
 
 export default function AdminBookings() {
@@ -72,12 +72,13 @@ export default function AdminBookings() {
           <select
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value as any)}
-            className="pl-10 pr-8 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            className="pl-10 pr-8 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent appearance-none"
           >
             <option value="all">ทุกสถานะ</option>
             <option value="confirmed">ยืนยันแล้ว</option>
             <option value="cancelled">ยกเลิกแล้ว</option>
           </select>
+          <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4 pointer-events-none" />
         </div>
       </div>
 
@@ -127,39 +128,46 @@ export default function AdminBookings() {
                   </div>
                 </div>
                 
-                <div className="grid md:grid-cols-3 gap-4">
-                  <div className="space-y-2">
-                    <div className="flex items-center text-gray-600 text-sm">
-                      <Clock className="w-4 h-4 mr-2" />
-                      <span>{booking.start_time} - {booking.end_time}</span>
+                <details className="mt-3 pt-3 border-t border-gray-100">
+                  <summary className="flex items-center justify-between text-sm font-medium text-gray-700 cursor-pointer">
+                    <span>รายละเอียดเพิ่มเติม</span>
+                    <ChevronDown className="w-4 h-4 details-open:hidden" />
+                    <ChevronUp className="w-4 h-4 details-closed:hidden" />
+                  </summary>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-3">
+                    <div className="space-y-2">
+                      <div className="flex items-center text-gray-600 text-sm">
+                        <Clock className="w-4 h-4 mr-2" />
+                        <span>{booking.start_time} - {booking.end_time}</span>
+                      </div>
+                      <div className="flex items-center text-gray-600 text-sm">
+                        <User className="w-4 h-4 mr-2" />
+                        <span>{booking.user_name}</span>
+                      </div>
                     </div>
-                    <div className="flex items-center text-gray-600 text-sm">
-                      <User className="w-4 h-4 mr-2" />
-                      <span>{booking.user_name}</span>
+                    
+                    <div className="space-y-2">
+                      <div className="flex items-center text-gray-600 text-sm">
+                        <Mail className="w-4 h-4 mr-2" />
+                        <span>{booking.user_email}</span>
+                      </div>
+                      <div className="flex items-center text-gray-600 text-sm">
+                        <Phone className="w-4 h-4 mr-2" />
+                        <span>{booking.user_phone}</span>
+                      </div>
+                    </div>
+                    
+                    <div className="text-xs text-gray-500">
+                      <p>จองเมื่อ: {new Date(booking.created_at).toLocaleString('th-TH')}</p>
                     </div>
                   </div>
                   
-                  <div className="space-y-2">
-                    <div className="flex items-center text-gray-600 text-sm">
-                      <Mail className="w-4 h-4 mr-2" />
-                      <span>{booking.user_email}</span>
+                  {booking.description && (
+                    <div className="mt-3 pt-3 border-t border-gray-100">
+                      <p className="text-gray-600 text-sm">{booking.description}</p>
                     </div>
-                    <div className="flex items-center text-gray-600 text-sm">
-                      <Phone className="w-4 h-4 mr-2" />
-                      <span>{booking.user_phone}</span>
-                    </div>
-                  </div>
-                  
-                  <div className="text-xs text-gray-500">
-                    <p>จองเมื่อ: {new Date(booking.created_at).toLocaleString('th-TH')}</p>
-                  </div>
-                </div>
-                
-                {booking.description && (
-                  <div className="mt-3 pt-3 border-t border-gray-100">
-                    <p className="text-gray-600 text-sm">{booking.description}</p>
-                  </div>
-                )}
+                  )}
+                </details>
               </div>
             );
           })}

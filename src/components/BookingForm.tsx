@@ -197,7 +197,7 @@ export default function BookingForm({
           />
         </div>
 
-        <div className="flex gap-4 pt-4">
+        <div className="flex flex-col sm:flex-row gap-4 pt-4">
           <button
             type="button"
             onClick={onCancel}

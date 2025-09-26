@@ -12,14 +12,14 @@ import BookingForm from './components/BookingForm';
 import BookingList from './components/BookingList';
 import AdminLogin from './components/AdminLogin';
 import AdminDashboard from './components/admin/AdminDashboard';
-import { CalendarDays, Building, LineChart, MessageSquare, Loader2, AlertCircle, Settings } from 'lucide-react';
+import MainLayout from './components/MainLayout'; // Import MainLayout
+import { Loader2, AlertCircle } from 'lucide-react';
 
 type ViewMode = 'booking' | 'management' | 'admin';
 
 function App() {
   const { rooms, loading: roomsLoading, error: roomsError } = useRooms();
   const { bookings, loading: bookingsLoading, error: bookingsError, createBooking, cancelBooking } = useBookings();
-  // Destructure loginAdminWithDepartmentCode instead of login
   const { user, loading: authLoading, error: authError, loginAdminWithDepartmentCode, logout, isAdmin } = useAuth();
   const [selectedRoom, setSelectedRoom] = useState<Room | null>(null);
   const [selectedDate, setSelectedDate] = useState<string>(formatDate(new Date()));
@@ -173,148 +173,88 @@ function App() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <header className="bg-white shadow-sm border-b">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center py-4">
-            <div className="flex items-center">
-              <Building className="w-8 h-8 text-blue-500 mr-3" />
-              <div>
-                <h1 className="text-2xl font-bold text-gray-900">ระบบจองห้องประชุม</h1>
-                <p className="text-sm text-gray-500">Meeting Room Booking System</p>
-              </div>
-            </div>
-            
-            <div className="flex space-x-2">
-              <button
-                onClick={() => setViewMode('booking')}
-                className={`flex items-center px-4 py-2 rounded-lg font-medium transition-colors ${
-                  viewMode === 'booking'
-                    ? 'bg-blue-500 text-white'
-                    : 'text-gray-600 hover:bg-gray-100'
-                }`}
-              >
-                <CalendarDays className="w-4 h-4 mr-2" />
-                จองห้อง
-              </button>
-              <button
-                onClick={() => setViewMode('management')}
-                className={`flex items-center px-4 py-2 rounded-lg font-medium transition-colors ${
-                  viewMode === 'management'
-                    ? 'bg-blue-500 text-white'
-                    : 'text-gray-600 hover:bg-gray-100'
-                }`}
-              >
-                <LineChart className="w-4 h-4 mr-2" />
-                จัดการการจอง
-              </button>
-              <button
-                onClick={() => setViewMode('admin')}
-                className={`flex items-center px-4 py-2 rounded-lg font-medium transition-colors ${
-                  viewMode === 'admin'
-                    ? 'bg-purple-500 text-white'
-                    : 'text-gray-600 hover:bg-gray-100'
-                }`}
-              >
-                <Settings className="w-4 h-4 mr-2" />
-                แอดมิน
-              </button>
-              <div className="flex items-center px-4 py-2 rounded-lg bg-green-50 text-green-700 border border-green-200">
-                <MessageSquare className="w-4 h-4 mr-2" />
-                <span className="text-sm font-medium">LINE Official พร้อม</span>
-              </div>
-            </div>
-          </div>
-        </div>
-      </header>
-
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {viewMode === 'booking' ? (
-          <>
-            {!showBookingForm ? (
-              <>
-                {/* Room Selection */}
-                <section className="mb-8">
-                  <h2 className="text-xl font-semibold text-gray-800 mb-6">เลือกห้องประชุม</h2>
-                  <div className="grid md:grid-cols-3 gap-6">
-                    {rooms.map(room => (
-                      <RoomCard
-                        key={room.id}
-                        room={room}
-                        onSelect={setSelectedRoom}
-                        isSelected={selectedRoom?.id === room.id}
-                        submitting={submitting}
-                      />
-                    ))}
-                  </div>
-                </section>
-
-                {/* Date and Time Selection */}
-                {selectedRoom && (
-                  <div className="grid lg:grid-cols-2 gap-8 mb-8">
-                    <Calendar
-                      selectedDate={selectedDate}
-                      onDateSelect={setSelectedDate}
-                      bookings={bookings}
+    <MainLayout
+      viewMode={viewMode}
+      setViewMode={setViewMode}
+      user={user}
+      isAdmin={isAdmin}
+      onLogout={logout}
+      onAdminLoginClick={() => setViewMode('admin')}
+    >
+      {viewMode === 'booking' ? (
+        <>
+          {!showBookingForm ? (
+            <>
+              {/* Room Selection */}
+              <section className="mb-8">
+                <h2 className="text-xl font-semibold text-gray-800 mb-6">เลือกห้องประชุม</h2>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {rooms.map(room => (
+                    <RoomCard
+                      key={room.id}
+                      room={room}
+                      onSelect={setSelectedRoom}
+                      isSelected={selectedRoom?.id === room.id}
+                      submitting={submitting}
                     />
-                    <TimeSlots
-                      timeSlots={getAvailableTimeSlots()}
-                      selectedStartTime={selectedStartTime}
-                      selectedEndTime={selectedEndTime}
-                      onTimeSelect={handleTimeSelect}
-                    />
-                  </div>
-                )}
+                  ))}
+                </div>
+              </section>
 
-                {/* Proceed Button */}
-                {canProceedToBooking && (
-                  <div className="flex justify-center">
-                    <button
-                      onClick={() => setShowBookingForm(true)}
-                      className="px-8 py-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors font-medium text-lg"
-                    >
-                      ดำเนินการจอง
-                    </button>
-                  </div>
-                )}
-              </>
-            ) : (
-              /* Booking Form */
-              selectedRoom && (
-                <div className="max-w-2xl mx-auto">
-                  <BookingForm
-                    room={selectedRoom}
+              {/* Date and Time Selection */}
+              {selectedRoom && (
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+                  <Calendar
                     selectedDate={selectedDate}
+                    onDateSelect={setSelectedDate}
+                    bookings={bookings}
+                  />
+                  <TimeSlots
+                    timeSlots={getAvailableTimeSlots()}
                     selectedStartTime={selectedStartTime}
                     selectedEndTime={selectedEndTime}
-                    onSubmit={handleBookingSubmit}
-                    onCancel={() => setShowBookingForm(false)}
+                    onTimeSelect={handleTimeSelect}
                   />
                 </div>
-              )
-            )}
-          </>
-        ) : (
-          /* Booking Management */
-          <BookingList
-            bookings={bookings}
-            rooms={rooms}
-            onCancelBooking={handleCancelBooking}
-          />
-        )}
-      </main>
+              )}
 
-      {/* Footer */}
-      <footer className="bg-white border-t mt-16">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <div className="text-center text-gray-500">
-            <p className="mb-2">ระบบจองห้องประชุมออนไลน์</p>
-            <p className="text-sm">ระบบออนไลน์พร้อมใช้งาน - ข้อมูลจะถูกเก็บไว้อย่างปลอดภัย</p>
-          </div>
-        </div>
-      </footer>
-    </div>
+              {/* Proceed Button */}
+              {canProceedToBooking && (
+                <div className="flex justify-center">
+                  <button
+                    onClick={() => setShowBookingForm(true)}
+                    className="px-8 py-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors font-medium text-lg"
+                  >
+                    ดำเนินการจอง
+                  </button>
+                </div>
+              )}
+            </>
+          ) : (
+            /* Booking Form */
+            selectedRoom && (
+              <div className="max-w-2xl mx-auto">
+                <BookingForm
+                  room={selectedRoom}
+                  selectedDate={selectedDate}
+                  selectedStartTime={selectedStartTime}
+                  selectedEndTime={selectedEndTime}
+                  onSubmit={handleBookingSubmit}
+                  onCancel={() => setShowBookingForm(false)}
+                />
+              </div>
+            )
+          )}
+        </>
+      ) : (
+        /* Booking Management */
+        <BookingList
+          bookings={bookings}
+          rooms={rooms}
+          onCancelBooking={handleCancelBooking}
+        />
+      )}
+    </MainLayout>
   );
 }
 

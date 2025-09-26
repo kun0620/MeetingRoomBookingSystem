@@ -9,76 +9,84 @@ interface TimeSlotsProps {
   onTimeSelect: (time: string, type: 'start' | 'end') => void;
 }
 
-export default function TimeSlots({ 
-  timeSlots, 
-  selectedStartTime, 
-  selectedEndTime, 
-  onTimeSelect 
+export default function TimeSlots({
+  timeSlots,
+  selectedStartTime,
+  selectedEndTime,
+  onTimeSelect,
 }: TimeSlotsProps) {
+  const handleStartTimeClick = (time: string) => {
+    onTimeSelect(time, 'start');
+  };
+
+  const handleEndTimeClick = (time: string) => {
+    onTimeSelect(time, 'end');
+  };
+
+  const isTimeSelected = (time: string) => {
+    if (!selectedStartTime) return false;
+    if (!selectedEndTime) return time === selectedStartTime;
+    return time >= selectedStartTime && time < selectedEndTime;
+  };
+
+  const isSelectableAsEndTime = (time: string) => {
+    if (!selectedStartTime) return false;
+    return time > selectedStartTime;
+  };
+
   return (
     <div className="bg-white rounded-xl shadow-lg p-6">
-      <div className="flex items-center mb-4">
-        <Clock className="w-5 h-5 mr-2 text-blue-500" />
-        <h3 className="text-lg font-semibold text-gray-800">เลือกช่วงเวลา</h3>
-      </div>
+      <h2 className="text-xl font-semibold text-gray-800 mb-6">เลือกช่วงเวลา</h2>
       
-      <div className="space-y-4">
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">เวลาเริ่มต้น</label>
-          <div className="grid grid-cols-4 sm:grid-cols-6 lg:grid-cols-8 gap-2">
-            {timeSlots.map((slot, index) => (
-              <button
-                key={index}
-                onClick={() => onTimeSelect(slot.time, 'start')}
-                disabled={!slot.available}
-                className={`
-                  p-2 text-sm rounded-lg border transition-all duration-200
-                  ${selectedStartTime === slot.time 
-                    ? 'bg-blue-500 text-white border-blue-500' 
-                    : slot.available 
-                      ? 'border-gray-200 hover:border-blue-300 hover:bg-blue-50' 
-                      : 'border-gray-200 bg-gray-100 text-gray-400 cursor-not-allowed'
-                  }
-                `}
-              >
-                {slot.time}
-              </button>
-            ))}
-          </div>
+      <div className="mb-6">
+        <div className="flex items-center mb-2 text-gray-700">
+          <Clock className="w-4 h-4 mr-2" />
+          <span className="font-medium">เวลาเริ่มต้น:</span>
+          <span className="ml-2 font-bold text-blue-600">{selectedStartTime || 'ยังไม่ได้เลือก'}</span>
         </div>
-
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">เวลาสิ้นสุด</label>
-          <div className="grid grid-cols-4 sm:grid-cols-6 lg:grid-cols-8 gap-2">
-            {timeSlots.map((slot, index) => (
-              <button
-                key={index}
-                onClick={() => onTimeSelect(slot.time, 'end')}
-                disabled={!slot.available || !selectedStartTime || slot.time <= selectedStartTime}
-                className={`
-                  p-2 text-sm rounded-lg border transition-all duration-200
-                  ${selectedEndTime === slot.time 
-                    ? 'bg-blue-500 text-white border-blue-500' 
-                    : slot.available && selectedStartTime && slot.time > selectedStartTime
-                      ? 'border-gray-200 hover:border-blue-300 hover:bg-blue-50' 
-                      : 'border-gray-200 bg-gray-100 text-gray-400 cursor-not-allowed'
-                  }
-                `}
-              >
-                {slot.time}
-              </button>
-            ))}
-          </div>
+        <div className="flex items-center text-gray-700">
+          <Clock className="w-4 h-4 mr-2" />
+          <span className="font-medium">เวลาสิ้นสุด:</span>
+          <span className="ml-2 font-bold text-blue-600">{selectedEndTime || 'ยังไม่ได้เลือก'}</span>
         </div>
       </div>
 
-      {selectedStartTime && selectedEndTime && (
-        <div className="mt-4 p-3 bg-blue-50 rounded-lg">
-          <p className="text-blue-800 text-sm">
-            <strong>ช่วงเวลาที่เลือก:</strong> {selectedStartTime} - {selectedEndTime}
-          </p>
-        </div>
-      )}
+      <div className="grid grid-cols-2 xs:grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-2">
+        {timeSlots.map((slot, index) => {
+          const isSelected = isTimeSelected(slot.time);
+          const isAvailable = slot.available;
+          const canBeEndTime = isSelectableAsEndTime(slot.time);
+
+          return (
+            <div key={index} className="relative">
+              <button
+                onClick={() => handleStartTimeClick(slot.time)}
+                disabled={!isAvailable}
+                className={`
+                  w-full py-2 rounded-lg text-sm font-medium transition-all duration-200
+                  ${isSelected
+                    ? 'bg-blue-500 text-white'
+                    : isAvailable
+                      ? 'bg-gray-100 text-gray-800 hover:bg-blue-50 hover:text-blue-700'
+                      : 'bg-gray-50 text-gray-400 cursor-not-allowed'
+                  }
+                `}
+              >
+                {slot.time}
+              </button>
+              {selectedStartTime && isAvailable && canBeEndTime && !isSelected && (
+                <button
+                  onClick={() => handleEndTimeClick(slot.time)}
+                  className="absolute inset-0 flex items-center justify-center bg-green-500 bg-opacity-80 text-white rounded-lg text-xs opacity-0 hover:opacity-100 transition-opacity duration-200"
+                  title="เลือกเป็นเวลาสิ้นสุด"
+                >
+                  สิ้นสุด
+                </button>
+              )}
+            </div>
+          );
+        })}
+      </div>
     </div>
   );
 }

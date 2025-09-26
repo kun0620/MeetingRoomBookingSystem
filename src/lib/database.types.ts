@@ -9,6 +9,72 @@ export type Json =
 export interface Database {
   public: {
     Tables: {
+      users: {
+        Row: {
+          id: string
+          email: string
+          is_active: boolean
+          role: string
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          email: string
+          is_active?: boolean
+          role?: string
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          email?: string
+          is_active?: boolean
+          role?: string
+          created_at?: string
+        }
+      }
+      department_codes: {
+        Row: {
+          id: string
+          code: string
+          department_name: string
+          role: string
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          code: string
+          department_name: string
+          role?: string
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          code?: string
+          department_name?: string
+          role?: string
+          created_at?: string
+        }
+      }
+      admin_settings: {
+        Row: {
+          id: string
+          key: string
+          value: string
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          key: string
+          value: string
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          key?: string
+          value?: string
+          created_at?: string
+        }
+      }
       rooms: {
         Row: {
           id: string

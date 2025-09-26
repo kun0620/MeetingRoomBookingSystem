@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useUsers } from '../../hooks/useUsers';
-import { Users, Plus, CreditCard as Edit, Trash2, Mail, Phone, Loader2, Shield, User as UserIcon } from 'lucide-react';
+import { Users, Plus, CreditCard as Edit, Trash2, Mail, Phone, Loader2, Shield, User as UserIcon, ChevronDown, ChevronUp } from 'lucide-react';
 import { User } from '../../types';
 
 export default function AdminUsers() {
@@ -27,6 +27,11 @@ export default function AdminUsers() {
     });
     setEditingUser(null);
     setShowForm(false);
+  };
+
+  const handleAddUserClick = () => {
+    resetForm();
+    setShowForm(true);
   };
 
   const handleEdit = (user: User) => {
@@ -92,7 +97,7 @@ export default function AdminUsers() {
             <h2 className="text-xl font-bold text-gray-800">จัดการสมาชิก</h2>
           </div>
           <button
-            onClick={() => setShowForm(true)}
+            onClick={handleAddUserClick}
             className="flex items-center px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
           >
             <Plus className="w-4 h-4 mr-2" />
@@ -152,25 +157,32 @@ export default function AdminUsers() {
                     </span>
                   </div>
                   
-                  <div className="grid md:grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <div className="flex items-center text-gray-600 text-sm">
-                        <Mail className="w-4 h-4 mr-2" />
-                        <span>{user.email}</span>
-                      </div>
-                      {user.phone && (
+                  <details className="mt-2">
+                    <summary className="flex items-center justify-between text-sm font-medium text-gray-700 cursor-pointer">
+                      <span>รายละเอียดผู้ใช้</span>
+                      <ChevronDown className="w-4 h-4 details-open:hidden" />
+                      <ChevronUp className="w-4 h-4 details-closed:hidden" />
+                    </summary>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-3">
+                      <div className="space-y-2">
                         <div className="flex items-center text-gray-600 text-sm">
-                          <Phone className="w-4 h-4 mr-2" />
-                          <span>{user.phone}</span>
+                          <Mail className="w-4 h-4 mr-2" />
+                          <span>{user.email}</span>
                         </div>
-                      )}
+                        {user.phone && (
+                          <div className="flex items-center text-gray-600 text-sm">
+                            <Phone className="w-4 h-4 mr-2" />
+                            <span>{user.phone}</span>
+                          </div>
+                        )}
+                      </div>
+                      
+                      <div className="text-xs text-gray-500">
+                        <p>สมัครเมื่อ: {new Date(user.created_at).toLocaleDateString('th-TH')}</p>
+                        <p>อัปเดตล่าสุด: {new Date(user.updated_at).toLocaleDateString('th-TH')}</p>
+                      </div>
                     </div>
-                    
-                    <div className="text-xs text-gray-500">
-                      <p>สมัครเมื่อ: {new Date(user.created_at).toLocaleDateString('th-TH')}</p>
-                      <p>อัปเดตล่าสุด: {new Date(user.updated_at).toLocaleDateString('th-TH')}</p>
-                    </div>
-                  </div>
+                  </details>
                 </div>
                 
                 <div className="flex space-x-2 ml-4">
@@ -206,7 +218,7 @@ export default function AdminUsers() {
       {/* Form Modal */}
       {showForm && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-xl shadow-xl max-w-md w-full">
+          <div className="bg-white rounded-xl shadow-xl max-w-md w-full max-h-[90vh] overflow-y-auto">
             <div className="p-6">
               <h3 className="text-lg font-bold text-gray-800 mb-4">
                 {editingUser ? 'แก้ไขสมาชิก' : 'เพิ่มสมาชิกใหม่'}
@@ -262,11 +274,12 @@ export default function AdminUsers() {
                   <select
                     value={formData.role}
                     onChange={(e) => setFormData(prev => ({ ...prev, role: e.target.value as 'admin' | 'user' }))}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent appearance-none"
                   >
                     <option value="user">ผู้ใช้ทั่วไป</option>
                     <option value="admin">ผู้ดูแลระบบ</option>
                   </select>
+                  <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4 pointer-events-none" />
                 </div>
 
                 <div className="flex items-center">
@@ -282,7 +295,7 @@ export default function AdminUsers() {
                   </label>
                 </div>
 
-                <div className="flex gap-4 pt-4">
+                <div className="flex flex-col sm:flex-row gap-4 pt-4">
                   <button
                     type="button"
                     onClick={resetForm}
