@@ -50,7 +50,7 @@ export interface Database {
           start_time: string
           end_time: string
           date: string
-          status: string
+          status: 'pending' | 'confirmed' | 'cancelled'
           created_at: string
         }
         Insert: {
@@ -64,7 +64,7 @@ export interface Database {
           start_time: string
           end_time: string
           date: string
-          status?: string
+          status?: 'pending' | 'confirmed' | 'cancelled'
           created_at?: string
         }
         Update: {
@@ -78,7 +78,7 @@ export interface Database {
           start_time?: string
           end_time?: string
           date?: string
-          status?: string
+          status?: 'pending' | 'confirmed' | 'cancelled'
           created_at?: string
         }
       }

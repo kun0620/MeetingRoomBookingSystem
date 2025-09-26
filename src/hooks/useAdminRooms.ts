@@ -29,7 +29,8 @@ export function useAdminRooms() {
     }
   };
 
-  const createRoom = async (roomData: Omit<Room, 'created_at'>) => {
+  // Change signature to omit 'id' for creation, as it's auto-generated
+  const createRoom = async (roomData: Omit<Room, 'id' | 'created_at'>) => {
     try {
       const { data, error } = await supabase
         .from('rooms')
@@ -37,10 +38,14 @@ export function useAdminRooms() {
         .select()
         .single();
 
-      if (error) throw error;
+      if (error) {
+        console.error('Supabase insert error:', error); // เพิ่มการ log ข้อผิดพลาดจาก Supabase
+        throw error;
+      }
       setRooms(prev => [...prev, data]);
       return data;
     } catch (err) {
+      console.error('Error creating room in hook:', err); // เพิ่มการ log ข้อผิดพลาดใน hook
       throw new Error(err instanceof Error ? err.message : 'เกิดข้อผิดพลาดในการเพิ่มห้อง');
     }
   };
@@ -54,10 +59,14 @@ export function useAdminRooms() {
         .select()
         .single();
 
-      if (error) throw error;
+      if (error) {
+        console.error('Supabase update error:', error); // เพิ่มการ log ข้อผิดพลาดจาก Supabase
+        throw error;
+      }
       setRooms(prev => prev.map(room => room.id === roomId ? data : room));
       return data;
     } catch (err) {
+      console.error('Error updating room in hook:', err); // เพิ่มการ log ข้อผิดพลาดใน hook
       throw new Error(err instanceof Error ? err.message : 'เกิดข้อผิดพลาดในการอัปเดตห้อง');
     }
   };
@@ -69,9 +78,13 @@ export function useAdminRooms() {
         .delete()
         .eq('id', roomId);
 
-      if (error) throw error;
+      if (error) {
+        console.error('Supabase delete error:', error); // เพิ่มการ log ข้อผิดพลาดจาก Supabase
+        throw error;
+      }
       setRooms(prev => prev.filter(room => room.id !== roomId));
     } catch (err) {
+      console.error('Error deleting room in hook:', err); // เพิ่มการ log ข้อผิดพลาดใน hook
       throw new Error(err instanceof Error ? err.message : 'เกิดข้อผิดพลาดในการลบห้อง');
     }
   };

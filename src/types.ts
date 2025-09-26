@@ -3,17 +3,22 @@ export interface Room {
   name: string;
   capacity: number;
   description: string;
-  image_url: string;
+  amenities: string[]; // เพิ่มฟิลด์ amenities
+  color: string;       // เพิ่มฟิลด์ color
+  created_at: string;  // เพิ่มฟิลด์ created_at
 }
 
 export interface Booking {
   id: string;
   room_id: string;
+  user_name: string;
+  user_email: string;
+  user_phone: string;
+  title: string;
+  description: string | null;
   date: string; // YYYY-MM-DD
   start_time: string; // HH:MM
   end_time: string; // HH:MM
-  purpose: string;
-  booked_by_email: string;
   status: 'pending' | 'confirmed' | 'cancelled';
   created_at: string;
 }
