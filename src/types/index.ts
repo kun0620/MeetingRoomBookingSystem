@@ -35,22 +35,3 @@ export interface CalendarDay {
   hasBookings: boolean;
   bookingsCount: number;
 }
-
-export interface User {
-  id: string;
-  email: string;
-  name: string;
-  phone?: string;
-  role: 'admin' | 'user';
-  is_active: boolean;
-  created_at: string;
-  updated_at: string;
-}
-
-export interface AdminSettings {
-  id: string;
-  key: string;
-  value: string;
-  description?: string;
-  updated_at: string;
-}
