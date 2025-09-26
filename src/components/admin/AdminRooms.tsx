@@ -1,0 +1,311 @@
+import React, { useState } from 'react';
+import { useAdminRooms } from '../../hooks/useAdminRooms';
+import { Building, Plus, CreditCard as Edit, Trash2, Users, Loader2 } from 'lucide-react';
+import { Room } from '../../types';
+
+export default function AdminRooms() {
+  const { rooms, loading, createRoom, updateRoom, deleteRoom } = useAdminRooms();
+  const [showForm, setShowForm] = useState(false);
+  const [editingRoom, setEditingRoom] = useState<Room | null>(null);
+  const [submitting, setSubmitting] = useState(false);
+
+  const [formData, setFormData] = useState({
+    id: '',
+    name: '',
+    capacity: 0,
+    description: '',
+    amenities: [] as string[],
+    color: 'from-blue-500 to-blue-600'
+  });
+
+  const colorOptions = [
+    { value: 'from-blue-500 to-blue-600', label: 'น้ำเงิน' },
+    { value: 'from-green-500 to-green-600', label: 'เขียว' },
+    { value: 'from-orange-500 to-orange-600', label: 'ส้ม' },
+    { value: 'from-purple-500 to-purple-600', label: 'ม่วง' },
+    { value: 'from-red-500 to-red-600', label: 'แดง' },
+    { value: 'from-emerald-500 to-emerald-600', label: 'เขียวมรกต' }
+  ];
+
+  const amenityOptions = [
+    'โปรเจคเตอร์',
+    'จอ LED TV',
+    'จอ Monitor',
+    'ระบบเสียง',
+    'WiFi',
+    'เครื่องปรับอากาศ',
+    'กระดานไวท์บอร์ด',
+    'โต๊ะประชุม',
+    'เก้าอี้สำนักงาน'
+  ];
+
+  const resetForm = () => {
+    setFormData({
+      id: '',
+      name: '',
+      capacity: 0,
+      description: '',
+      amenities: [],
+      color: 'from-blue-500 to-blue-600'
+    });
+    setEditingRoom(null);
+    setShowForm(false);
+  };
+
+  const handleEdit = (room: Room) => {
+    setFormData({
+      id: room.id,
+      name: room.name,
+      capacity: room.capacity,
+      description: room.description,
+      amenities: room.amenities,
+      color: room.color
+    });
+    setEditingRoom(room);
+    setShowForm(true);
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSubmitting(true);
+
+    try {
+      if (editingRoom) {
+        await updateRoom(editingRoom.id, formData);
+        alert('อัปเดตห้องสำเร็จ!');
+      } else {
+        await createRoom(formData);
+        alert('เพิ่มห้องสำเร็จ!');
+      }
+      resetForm();
+    } catch (error) {
+      alert(`เกิดข้อผิดพลาด: ${error instanceof Error ? error.message : 'ไม่สามารถบันทึกข้อมูลได้'}`);
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleDelete = async (roomId: string, roomName: string) => {
+    if (confirm(`คุณต้องการลบห้อง "${roomName}" หรือไม่?`)) {
+      try {
+        await deleteRoom(roomId);
+        alert('ลบห้องสำเร็จ!');
+      } catch (error) {
+        alert(`เกิดข้อผิดพลาด: ${error instanceof Error ? error.message : 'ไม่สามารถลบห้องได้'}`);
+      }
+    }
+  };
+
+  const handleAmenityChange = (amenity: string, checked: boolean) => {
+    setFormData(prev => ({
+      ...prev,
+      amenities: checked 
+        ? [...prev.amenities, amenity]
+        : prev.amenities.filter(a => a !== amenity)
+    }));
+  };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <Loader2 className="w-8 h-8 animate-spin text-blue-500" />
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-6">
+      <div className="bg-white rounded-xl shadow-lg p-6">
+        <div className="flex justify-between items-center mb-6">
+          <div className="flex items-center">
+            <Building className="w-6 h-6 text-blue-500 mr-2" />
+            <h2 className="text-xl font-bold text-gray-800">จัดการห้องประชุม</h2>
+          </div>
+          <button
+            onClick={() => setShowForm(true)}
+            className="flex items-center px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
+          >
+            <Plus className="w-4 h-4 mr-2" />
+            เพิ่มห้องใหม่
+          </button>
+        </div>
+
+        {/* Room List */}
+        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {rooms.map((room) => (
+            <div key={room.id} className="border border-gray-200 rounded-lg overflow-hidden">
+              <div className={`h-24 bg-gradient-to-br ${room.color} flex items-center justify-center`}>
+                <div className="text-center text-white">
+                  <h3 className="font-bold">{room.name}</h3>
+                  <div className="flex items-center justify-center text-sm">
+                    <Users className="w-4 h-4 mr-1" />
+                    {room.capacity} คน
+                  </div>
+                </div>
+              </div>
+              
+              <div className="p-4">
+                <p className="text-gray-600 text-sm mb-3">{room.description}</p>
+                <div className="flex justify-between items-center">
+                  <span className="text-xs text-gray-500">
+                    {room.amenities.length} สิ่งอำนวยความสะดวก
+                  </span>
+                  <div className="flex space-x-2">
+                    <button
+                      onClick={() => handleEdit(room)}
+                      className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                    >
+                      <Edit className="w-4 h-4" />
+                    </button>
+                    <button
+                      onClick={() => handleDelete(room.id, room.name)}
+                      className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Form Modal */}
+      {showForm && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="p-6">
+              <h3 className="text-lg font-bold text-gray-800 mb-4">
+                {editingRoom ? 'แก้ไขห้องประชุม' : 'เพิ่มห้องประชุมใหม่'}
+              </h3>
+
+              <form onSubmit={handleSubmit} className="space-y-4">
+                <div className="grid md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      รหัสห้อง *
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      value={formData.id}
+                      onChange={(e) => setFormData(prev => ({ ...prev, id: e.target.value }))}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      placeholder="เช่น ROOM-001"
+                      disabled={!!editingRoom}
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      ชื่อห้อง *
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      value={formData.name}
+                      onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      placeholder="เช่น ห้องประชุมใหญ่"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      ความจุ (คน) *
+                    </label>
+                    <input
+                      type="number"
+                      required
+                      min="1"
+                      value={formData.capacity}
+                      onChange={(e) => setFormData(prev => ({ ...prev, capacity: parseInt(e.target.value) }))}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      สีธีม
+                    </label>
+                    <select
+                      value={formData.color}
+                      onChange={(e) => setFormData(prev => ({ ...prev, color: e.target.value }))}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    >
+                      {colorOptions.map(option => (
+                        <option key={option.value} value={option.value}>
+                          {option.label}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    คำอธิบาย
+                  </label>
+                  <textarea
+                    value={formData.description}
+                    onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
+                    rows={3}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    placeholder="อธิบายเกี่ยวกับห้องประชุม"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    สิ่งอำนวยความสะดวก
+                  </label>
+                  <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+                    {amenityOptions.map(amenity => (
+                      <label key={amenity} className="flex items-center">
+                        <input
+                          type="checkbox"
+                          checked={formData.amenities.includes(amenity)}
+                          onChange={(e) => handleAmenityChange(amenity, e.target.checked)}
+                          className="mr-2"
+                        />
+                        <span className="text-sm">{amenity}</span>
+                      </label>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="flex gap-4 pt-4">
+                  <button
+                    type="button"
+                    onClick={resetForm}
+                    disabled={submitting}
+                    className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50"
+                  >
+                    ยกเลิก
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={submitting}
+                    className="flex-1 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors disabled:opacity-50 flex items-center justify-center"
+                  >
+                    {submitting ? (
+                      <>
+                        <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                        กำลังบันทึก...
+                      </>
+                    ) : (
+                      editingRoom ? 'อัปเดต' : 'เพิ่มห้อง'
+                    )}
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
