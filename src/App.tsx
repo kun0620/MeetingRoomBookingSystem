@@ -4,22 +4,18 @@ import { timeSlots } from './utils/timeSlots';
 import { formatDate, isPastDate } from './utils/dateUtils';
 import { useRooms } from './hooks/useRooms';
 import { useBookings } from './hooks/useBookings';
-import { useAuth } from './hooks/useAuth';
 import RoomCard from './components/RoomCard';
 import Calendar from './components/Calendar';
 import TimeSlots from './components/TimeSlots';
 import BookingForm from './components/BookingForm';
 import BookingList from './components/BookingList';
-import AdminLogin from './components/AdminLogin';
-import AdminDashboard from './components/admin/AdminDashboard';
-import { CalendarDays, Building, LineChart, MessageSquare, Loader2, AlertCircle, Settings } from 'lucide-react';
+import { CalendarDays, Building, LineChart, MessageSquare, Loader2, AlertCircle } from 'lucide-react';
 
-type ViewMode = 'booking' | 'management' | 'admin';
+type ViewMode = 'booking' | 'management';
 
 function App() {
   const { rooms, loading: roomsLoading, error: roomsError } = useRooms();
   const { bookings, loading: bookingsLoading, error: bookingsError, createBooking, cancelBooking } = useBookings();
-  const { user, loading: authLoading, error: authError, login, logout, isAdmin } = useAuth();
   const [selectedRoom, setSelectedRoom] = useState<Room | null>(null);
   const [selectedDate, setSelectedDate] = useState<string>(formatDate(new Date()));
   const [selectedStartTime, setSelectedStartTime] = useState<string>('');
@@ -104,15 +100,6 @@ function App() {
 
   const canProceedToBooking = selectedRoom && selectedDate && selectedStartTime && selectedEndTime;
 
-  // Admin login handling
-  const handleAdminLogin = async (email: string, password: string) => {
-    const success = await login(email, password);
-    if (success) {
-      setViewMode('admin');
-    }
-    return success;
-  };
-
   // Loading state
   if (roomsLoading || bookingsLoading) {
     return (
@@ -142,31 +129,6 @@ function App() {
           </button>
         </div>
       </div>
-    );
-  }
-
-  // Admin login view
-  if (viewMode === 'admin' && !user) {
-    return (
-      <AdminLogin 
-        onLogin={handleAdminLogin}
-        loading={authLoading}
-        error={authError}
-      />
-    );
-  }
-
-  // Admin dashboard view
-  if (viewMode === 'admin' && user && isAdmin) {
-    return (
-      <AdminDashboard 
-        user={user}
-        onLogout={() => {
-          logout();
-          setViewMode('booking');
-        }}
-        onBackToMain={() => setViewMode('booking')}
-      />
     );
   }
 
@@ -206,17 +168,6 @@ function App() {
               >
                 <LineChart className="w-4 h-4 mr-2" />
                 จัดการการจอง
-              </button>
-              <button
-                onClick={() => setViewMode('admin')}
-                className={`flex items-center px-4 py-2 rounded-lg font-medium transition-colors ${
-                  viewMode === 'admin'
-                    ? 'bg-purple-500 text-white'
-                    : 'text-gray-600 hover:bg-gray-100'
-                }`}
-              >
-                <Settings className="w-4 h-4 mr-2" />
-                แอดมิน
               </button>
               <div className="flex items-center px-4 py-2 rounded-lg bg-green-50 text-green-700 border border-green-200">
                 <MessageSquare className="w-4 h-4 mr-2" />
