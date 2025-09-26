@@ -4,10 +4,40 @@
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/vite.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <!-- สำหรับแชร์ใน LINE -->
+  <meta property="og:title" content="ระบบจองห้องประชุม">
+  <meta property="og:description" content="จองห้องประชุมออนไลน์ได้ง่าย ๆ">
+  <meta property="og:image" content="https://your-domain.com/preview.jpg">
+  <meta property="og:url" content="https://your-domain.com">
+  
+  <!-- สำหรับ Mobile -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="format-detection" content="telephone=no">
+    
     <title>Meeting Room Booking System</title>
   </head>
   <body>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
+<!-- เพิ่มใน public/index.html ก่อน </body> -->
+<script>
+window.addEventListener('load', function() {
+  setTimeout(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    
+    if (urlParams.get('page') === 'management') {
+      // หาปุ่ม "จัดการการจอง" แล้วคลิก
+      const managementBtn = Array.from(document.querySelectorAll('button')).find(btn => 
+        btn.textContent?.includes('จัดการการจอง')
+      );
+      
+      if (managementBtn) {
+        managementBtn.click();
+        console.log('✅ Auto-clicked Management button');
+      }
+    }
+  }, 500); // รอ React render เสร็จ
+});
+</script>
   </body>
 </html>
