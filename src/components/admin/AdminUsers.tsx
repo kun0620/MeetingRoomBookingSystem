@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useUsers } from '../../hooks/useUsers';
-import { Users, Plus, Edit, Trash2, Mail, Phone, Loader2, Shield, User as UserIcon } from 'lucide-react';
+import { Users, Plus, CreditCard as Edit, Trash2, Mail, Phone, Loader2, Shield, User as UserIcon } from 'lucide-react';
 import { User } from '../../types';
 
 export default function AdminUsers() {

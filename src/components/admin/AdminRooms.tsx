@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useAdminRooms } from '../../hooks/useAdminRooms';
-import { Building, Plus, Edit, Trash2, Users, Loader2 } from 'lucide-react';
+import { Building, Plus, CreditCard as Edit, Trash2, Users, Loader2 } from 'lucide-react';
 import { Room } from '../../types';
 
 export default function AdminRooms() {
