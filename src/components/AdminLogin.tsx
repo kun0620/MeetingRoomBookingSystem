@@ -1,18 +1,15 @@
 import React, { useState } from 'react';
-import { Lock, User, Eye, EyeOff, Loader2 } from 'lucide-react';
+import { Lock, ArrowLeft, Loader2 } from 'lucide-react';
 
 interface AdminLoginProps {
-  onLogin: (email: string, password: string) => Promise<boolean>;
+  onLogin: (code: string) => Promise<boolean>; // Changed to accept only code
   loading?: boolean;
   error?: string | null;
+  onBackToMain: () => void;
 }
 
-export default function AdminLogin({ onLogin, loading = false, error }: AdminLoginProps) {
-  const [formData, setFormData] = useState({
-    email: '',
-    password: ''
-  });
-  const [showPassword, setShowPassword] = useState(false);
+export default function AdminLogin({ onLogin, loading = false, error, onBackToMain }: AdminLoginProps) {
+  const [departmentCode, setDepartmentCode] = useState('');
   const [submitting, setSubmitting] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -20,7 +17,7 @@ export default function AdminLogin({ onLogin, loading = false, error }: AdminLog
     setSubmitting(true);
     
     try {
-      await onLogin(formData.email, formData.password);
+      await onLogin(departmentCode);
     } finally {
       setSubmitting(false);
     }
@@ -28,69 +25,46 @@ export default function AdminLogin({ onLogin, loading = false, error }: AdminLog
 
   return (
     <div className="min-h-screen bg-gray-50 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-md w-full space-y-8">
+      <div className="max-w-md w-full space-y-8 bg-white p-8 rounded-xl shadow-lg relative">
+        {/* Back Button */}
+        <button
+          onClick={onBackToMain}
+          className="absolute top-4 left-4 p-2 rounded-full text-gray-600 hover:bg-gray-100 hover:text-blue-600 transition-colors"
+          title="กลับสู่หน้าหลัก"
+        >
+          <ArrowLeft className="h-5 w-5" />
+        </button>
+
         <div className="text-center">
           <Lock className="mx-auto h-12 w-12 text-blue-500" />
           <h2 className="mt-6 text-3xl font-bold text-gray-900">
             เข้าสู่ระบบแอดมิน
           </h2>
           <p className="mt-2 text-sm text-gray-600">
-            กรุณาเข้าสู่ระบบเพื่อจัดการระบบ
+            กรุณาป้อนรหัสประจำแผนกเพื่อเข้าสู่ระบบ
           </p>
         </div>
 
         <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
           <div className="space-y-4">
             <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
-                อีเมล
-              </label>
-              <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <User className="h-5 w-5 text-gray-400" />
-                </div>
-                <input
-                  id="email"
-                  name="email"
-                  type="email"
-                  required
-                  value={formData.email}
-                  onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
-                  className="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  placeholder="admin@example.com"
-                />
-              </div>
-            </div>
-
-            <div>
-              <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-2">
-                รหัสผ่าน
+              <label htmlFor="department-code" className="block text-sm font-medium text-gray-700 mb-2">
+                รหัสประจำแผนก
               </label>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                   <Lock className="h-5 w-5 text-gray-400" />
                 </div>
                 <input
-                  id="password"
-                  name="password"
-                  type={showPassword ? 'text' : 'password'}
+                  id="department-code"
+                  name="department-code"
+                  type="text"
                   required
-                  value={formData.password}
-                  onChange={(e) => setFormData(prev => ({ ...prev, password: e.target.value }))}
-                  className="block w-full pl-10 pr-10 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  placeholder="รหัสผ่าน"
+                  value={departmentCode}
+                  onChange={(e) => setDepartmentCode(e.target.value)}
+                  className="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  placeholder="ป้อนรหัสแผนกของคุณ"
                 />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute inset-y-0 right-0 pr-3 flex items-center"
-                >
-                  {showPassword ? (
-                    <EyeOff className="h-5 w-5 text-gray-400" />
-                  ) : (
-                    <Eye className="h-5 w-5 text-gray-400" />
-                  )}
-                </button>
               </div>
             </div>
           </div>
@@ -103,9 +77,9 @@ export default function AdminLogin({ onLogin, loading = false, error }: AdminLog
 
           <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
             <p className="text-blue-800 text-sm">
-              <strong>Demo Login:</strong><br />
-              Email: admin@example.com<br />
-              Password: admin123
+              <strong>สำหรับผู้ดูแลระบบ:</strong><br />
+              1. สร้างรหัสแผนกใหม่ในตาราง `public.department_codes` ใน Supabase Studio<br />
+              2. กำหนด `role` ของรหัสแผนกนั้นเป็น 'admin'
             </p>
           </div>
 

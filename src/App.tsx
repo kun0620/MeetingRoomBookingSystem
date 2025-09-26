@@ -19,7 +19,8 @@ type ViewMode = 'booking' | 'management' | 'admin';
 function App() {
   const { rooms, loading: roomsLoading, error: roomsError } = useRooms();
   const { bookings, loading: bookingsLoading, error: bookingsError, createBooking, cancelBooking } = useBookings();
-  const { user, loading: authLoading, error: authError, login, logout, isAdmin } = useAuth();
+  // Destructure loginAdminWithDepartmentCode instead of login
+  const { user, loading: authLoading, error: authError, loginAdminWithDepartmentCode, logout, isAdmin } = useAuth();
   const [selectedRoom, setSelectedRoom] = useState<Room | null>(null);
   const [selectedDate, setSelectedDate] = useState<string>(formatDate(new Date()));
   const [selectedStartTime, setSelectedStartTime] = useState<string>('');
@@ -104,9 +105,9 @@ function App() {
 
   const canProceedToBooking = selectedRoom && selectedDate && selectedStartTime && selectedEndTime;
 
-  // Admin login handling
-  const handleAdminLogin = async (email: string, password: string) => {
-    const success = await login(email, password);
+  // Admin login handling - now uses department code
+  const handleAdminLogin = async (code: string) => {
+    const success = await loginAdminWithDepartmentCode(code); // Call the new function
     if (success) {
       setViewMode('admin');
     }
@@ -152,6 +153,7 @@ function App() {
         onLogin={handleAdminLogin}
         loading={authLoading}
         error={authError}
+        onBackToMain={() => setViewMode('booking')} // Pass the function to go back
       />
     );
   }

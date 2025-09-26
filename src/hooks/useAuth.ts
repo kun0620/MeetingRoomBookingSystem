@@ -1,77 +1,197 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react'; // Import useRef
 import { supabase } from '../lib/supabase';
-import { User } from '../types';
+import { User, DepartmentCode } from '../types'; // Import DepartmentCode type
 
 export function useAuth() {
-  const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  // State for Supabase Auth users (e.g., regular users)
+  const [supabaseUser, setSupabaseUser] = useState<User | null>(null);
+  const [supabaseLoading, setSupabaseLoading] = useState(true);
+  const [supabaseError, setSupabaseError] = useState<string | null>(null);
+
+  // State for Department Code authenticated admin
+  const [departmentCodeAdmin, setDepartmentCodeAdmin] = useState<User | null>(null);
+  const [departmentCodeLoading, setDepartmentCodeLoading] = useState(false);
+  const [departmentCodeError, setDepartmentCodeError] = useState<string | null>(null);
+
+  const mounted = useRef(false); // Add a ref to track mounted state
 
   useEffect(() => {
-    checkUser();
+    mounted.current = true; // Set to true when component mounts
+
+    // Listener for Supabase Auth changes (for regular users)
+    const { data: authListener } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (mounted.current) { // Only update if mounted
+        if (session) {
+          fetchUserProfile(session.user.id);
+        } else {
+          setSupabaseUser(null);
+          setSupabaseLoading(false);
+        }
+      }
+    });
+
+    // Initial check for Supabase Auth session
+    const initAuth = async () => {
+      if (mounted.current) { // Only run if mounted
+        await checkSessionAndFetchUser();
+      }
+    };
+    initAuth();
+
+    // Check for locally stored department code admin status
+    const storedAdmin = localStorage.getItem('department_code_admin');
+    if (storedAdmin) {
+      try {
+        if (mounted.current) { // Only update if mounted
+          setDepartmentCodeAdmin(JSON.parse(storedAdmin));
+        }
+      } catch (e) {
+        console.error('Failed to parse stored department code admin:', e);
+        localStorage.removeItem('department_code_admin');
+      }
+    }
+
+    return () => {
+      mounted.current = false; // Set to false when component unmounts
+      authListener.subscription.unsubscribe();
+    };
   }, []);
 
-  const checkUser = async () => {
+  const fetchUserProfile = async (userId: string) => {
     try {
-      setLoading(true);
-      
-      // For demo purposes, we'll simulate admin login
-      // In production, you'd integrate with Supabase Auth
-      const adminEmail = localStorage.getItem('admin_email');
-      
-      if (adminEmail) {
-        const { data, error } = await supabase
-          .from('users')
-          .select('*')
-          .eq('email', adminEmail)
-          .eq('is_active', true)
-          .single();
+      if (mounted.current) setSupabaseLoading(true);
+      const { data, error } = await supabase
+        .from('users')
+        .select('*')
+        .eq('id', userId)
+        .single();
 
-        if (error) throw error;
-        setUser(data);
-      }
+      if (error) throw error;
+      if (mounted.current) setSupabaseUser(data);
     } catch (err) {
-      console.error('Auth error:', err);
-      setError(err instanceof Error ? err.message : 'เกิดข้อผิดพลาดในการตรวจสอบสิทธิ์');
+      console.error('Error fetching user profile:', err);
+      if (mounted.current) setSupabaseError(err instanceof Error ? err.message : 'Failed to fetch user profile');
+      if (mounted.current) setSupabaseUser(null);
     } finally {
-      setLoading(false);
+      if (mounted.current) setSupabaseLoading(false);
     }
   };
 
-  const login = async (email: string, password: string) => {
+  const checkSessionAndFetchUser = async () => {
     try {
-      setLoading(true);
-      
-      // Simple demo login - in production use proper authentication
-      if (email === 'admin@example.com' && password === 'admin123') {
-        localStorage.setItem('admin_email', email);
-        await checkUser();
-        return true;
+      if (mounted.current) setSupabaseLoading(true);
+      const { data: { session }, error } = await supabase.auth.getSession();
+      if (error) throw error;
+
+      if (session) {
+        await fetchUserProfile(session.user.id);
       } else {
-        throw new Error('อีเมลหรือรหัสผ่านไม่ถูกต้อง');
+        if (mounted.current) setSupabaseUser(null);
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'เกิดข้อผิดพลาดในการเข้าสู่ระบบ');
+      console.error('Error checking session:', err);
+      if (mounted.current) setSupabaseError(err instanceof Error ? err.message : 'Failed to check session');
+      if (mounted.current) setSupabaseUser(null);
+    } finally {
+      if (mounted.current) setSupabaseLoading(false);
+    }
+  };
+
+  const loginWithEmailPassword = async (email: string, password: string) => {
+    try {
+      if (mounted.current) setSupabaseLoading(true);
+      if (mounted.current) setSupabaseError(null);
+      const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+
+      if (error) throw error;
+      
+      if (data.user) {
+        await fetchUserProfile(data.user.id);
+        return true;
+      }
+      return false;
+    } catch (err) {
+      if (mounted.current) setSupabaseError(err instanceof Error ? err.message : 'เกิดข้อผิดพลาดในการเข้าสู่ระบบ');
       return false;
     } finally {
-      setLoading(false);
+      if (mounted.current) setSupabaseLoading(false);
     }
   };
 
-  const logout = () => {
-    localStorage.removeItem('admin_email');
-    setUser(null);
+  const loginAdminWithDepartmentCode = async (code: string) => {
+    try {
+      if (mounted.current) setDepartmentCodeLoading(true);
+      if (mounted.current) setDepartmentCodeError(null);
+
+      const { data, error } = await supabase
+        .from('department_codes')
+        .select('*')
+        .eq('code', code)
+        .single();
+
+      if (error) {
+        if (error.code === 'PGRST116') { // No rows found
+          throw new Error('รหัสประจำแผนกไม่ถูกต้อง');
+        }
+        throw error;
+      }
+
+      if (data && data.role === 'admin') {
+        const adminUser: User = {
+          id: data.id, // Use department code ID as user ID
+          email: `${data.department_name.toLowerCase().replace(/\s/g, '')}@department.com`, // Mock email
+          is_active: true,
+          role: 'admin',
+          created_at: data.created_at,
+        };
+        if (mounted.current) setDepartmentCodeAdmin(adminUser);
+        localStorage.setItem('department_code_admin', JSON.stringify(adminUser));
+        return true;
+      } else {
+        throw new Error('รหัสประจำแผนกไม่ถูกต้อง หรือไม่มีสิทธิ์เป็นผู้ดูแลระบบ');
+      }
+    } catch (err) {
+      if (mounted.current) setDepartmentCodeError(err instanceof Error ? err.message : 'เกิดข้อผิดพลาดในการเข้าสู่ระบบด้วยรหัสแผนก');
+      return false;
+    } finally {
+      if (mounted.current) setDepartmentCodeLoading(false);
+    }
   };
 
-  const isAdmin = user?.role === 'admin';
+  const logout = async () => {
+    try {
+      // Clear Supabase Auth session
+      if (supabaseUser) {
+        if (mounted.current) setSupabaseLoading(true);
+        if (mounted.current) setSupabaseError(null);
+        const { error } = await supabase.auth.signOut();
+        if (error) throw error;
+        if (mounted.current) setSupabaseUser(null);
+      }
+
+      // Clear department code admin session
+      if (departmentCodeAdmin) {
+        if (mounted.current) setDepartmentCodeAdmin(null);
+        localStorage.removeItem('department_code_admin');
+      }
+    } catch (err) {
+      if (mounted.current) setSupabaseError(err instanceof Error ? err.message : 'เกิดข้อผิดพลาดในการออกจากระบบ');
+    } finally {
+      if (mounted.current) setSupabaseLoading(false);
+    }
+  };
+
+  // Determine if any user is an admin
+  const isAdmin = supabaseUser?.role === 'admin' || departmentCodeAdmin?.role === 'admin';
 
   return {
-    user,
-    loading,
-    error,
-    login,
+    user: supabaseUser || departmentCodeAdmin, // Prioritize Supabase user if both exist, or department code admin
+    loading: supabaseLoading || departmentCodeLoading,
+    error: supabaseError || departmentCodeError,
+    loginWithEmailPassword, // Keep if regular user login is needed
+    loginAdminWithDepartmentCode, // New admin login function
     logout,
     isAdmin,
-    refetch: checkUser
+    refetch: checkSessionAndFetchUser // Refetch Supabase user profile
   };
 }
