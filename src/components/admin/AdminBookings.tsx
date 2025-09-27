@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useBookings } from '../../hooks/useBookings';
 import { useRooms } from '../../hooks/useRooms';
 import { useDepartmentCodes } from '../../hooks/useDepartmentCodes'; // Import the new hook
-import { Calendar, Clock, User, Phone, Mail, X, Search, Filter, Loader2, ChevronDown, Tag } from 'lucide-react';
+import { Calendar, Clock, User, Phone, Mail, X, Search, Filter, Loader as Loader2, ChevronDown, Tag } from 'lucide-react';
 import { formatDateThai } from '../../utils/dateUtils';
 import CancelBookingModal from '../CancelBookingModal'; // Import the CancelBookingModal
 
