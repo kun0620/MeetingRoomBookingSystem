@@ -150,7 +150,7 @@ function App() {
             <div className="fixed bottom-0 left-0 right-0 bg-transparent p-4 shadow-lg z-30 lg:ml-[290px] flex justify-center">
               <button
                 onClick={() => setShowBookingModal(true)}
-                className="px-8 py-3 bg-blue-500 border border-blue-500 text-white rounded-lg hover:bg-blue-50 transition-colors font-medium text-lg"
+                className="px-8 py-3 bg-blue-500 border border-blue-500 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium text-lg"
               >
                 ดำเนินการจองห้อง {selectedRoom.name}
               </button>

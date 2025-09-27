@@ -172,11 +172,6 @@ export default function MainLayout({
                   <p className="text-sm text-gray-500">Meeting Room Booking System</p>
                 </div>
               </div>
-              {/* Right section: LINE Official status */}
-              <div className="flex items-center px-4 py-2 rounded-lg bg-green-50 text-green-700 border border-green-200">
-                <MessageSquare className="w-4 h-4 mr-2" />
-                <span className="text-sm font-medium">LINE Official พร้อม</span>
-              </div>
             </div>
           </div>
         </header>
