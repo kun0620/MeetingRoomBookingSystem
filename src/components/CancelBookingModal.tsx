@@ -1,32 +1,22 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { X, Loader2, AlertTriangle } from 'lucide-react';
+import { Booking } from '../types'; // Import Booking type
 
 interface CancelBookingModalProps {
-  bookingId: string;
-  bookingTitle: string;
-  onConfirm: (bookingId: string, departmentCode: string) => void; // Added departmentCode
+  booking: Booking;
+  roomName: string;
+  onConfirm: () => void;
   onClose: () => void;
   submitting: boolean;
 }
 
 export default function CancelBookingModal({
-  bookingId,
-  bookingTitle,
+  booking,
+  roomName,
   onConfirm,
   onClose,
   submitting,
 }: CancelBookingModalProps) {
-  const [departmentCode, setDepartmentCode] = useState('');
-  const [error, setError] = useState<string | null>(null);
-
-  const handleConfirm = () => {
-    if (!departmentCode.trim()) {
-      setError('กรุณากรอกรหัสแผนกเพื่อยืนยันการยกเลิก');
-      return;
-    }
-    setError(null);
-    onConfirm(bookingId, departmentCode);
-  };
 
   return (
     <div className="fixed inset-0 bg-gray-900 bg-opacity-50 flex items-center justify-center p-4 z-50">
@@ -42,27 +32,8 @@ export default function CancelBookingModal({
         <div className="text-center mb-6">
           <AlertTriangle className="w-12 h-12 text-red-500 mx-auto mb-4" />
           <h3 className="text-xl font-bold text-gray-800 mb-2">ยืนยันการยกเลิกการจอง</h3>
-          <p className="text-gray-600">คุณต้องการยกเลิกการจอง "<span className="font-semibold">{bookingTitle}</span>" ใช่หรือไม่?</p>
+          <p className="text-gray-600">คุณต้องการยกเลิกการจองห้อง "<span className="font-semibold">{roomName}</span>" โดย "<span className="font-semibold">{booking.contact_person_name}</span>" ใช่หรือไม่?</p>
           <p className="text-sm text-gray-500 mt-1">การดำเนินการนี้ไม่สามารถย้อนกลับได้</p>
-        </div>
-
-        <div className="mb-4">
-          <label htmlFor="departmentCode" className="block text-sm font-medium text-gray-700 mb-2">
-            รหัสแผนก <span className="text-red-500">*</span>
-          </label>
-          <input
-            type="text"
-            id="departmentCode"
-            value={departmentCode}
-            onChange={(e) => {
-              setDepartmentCode(e.target.value);
-              if (error) setError(null); // Clear error when user types
-            }}
-            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"
-            placeholder="กรอกรหัสแผนกเพื่อยืนยัน"
-            disabled={submitting}
-          />
-          {error && <p className="text-red-500 text-xs mt-1">{error}</p>}
         </div>
 
         <div className="flex justify-end space-x-3">
@@ -74,7 +45,7 @@ export default function CancelBookingModal({
             ยกเลิก
           </button>
           <button
-            onClick={handleConfirm}
+            onClick={onConfirm}
             className="px-5 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors flex items-center justify-center"
             disabled={submitting}
           >

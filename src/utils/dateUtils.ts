@@ -8,11 +8,11 @@ export const formatDateThai = (dateString: string): string => {
     'มกราคม', 'กุมภาพันธ์', 'มีนาคม', 'เมษายน', 'พฤษภาคม', 'มิถุนายน',
     'กรกฎาคม', 'สิงหาคม', 'กันยายน', 'ตุลาคม', 'พฤศจิกายน', 'ธันวาคม'
   ];
-  
+
   const day = date.getDate();
   const month = thaiMonths[date.getMonth()];
   const year = date.getFullYear() + 543;
-  
+
   return `${day} ${month} ${year}`;
 };
 
@@ -29,4 +29,15 @@ export const isPastDate = (dateString: string): boolean => {
 export const formatTime = (timeString: string): string => {
   const [hours, minutes] = timeString.split(':');
   return `${hours}:${minutes}`;
+};
+
+export const formatDateTimeThai = (isoString: string, type: 'date' | 'time'): string => {
+  const date = new Date(isoString);
+  if (type === 'date') {
+    return formatDateThai(isoString);
+  } else if (type === 'time') {
+    // Extract HH:MM from ISO string for formatTime
+    return formatTime(date.toISOString().substring(11, 16));
+  }
+  return '';
 };

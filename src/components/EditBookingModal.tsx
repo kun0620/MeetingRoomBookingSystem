@@ -1,52 +1,61 @@
 import React, { useState, useEffect } from 'react';
 import { Dialog } from '@headlessui/react';
-import { Booking, Room } from '../types';
-import { formatDateThai } from '../utils/dateUtils';
-import { useRooms } from '../hooks/useRooms';
+import { Booking, Room, DepartmentCode } from '../types'; // Import DepartmentCode
+import { formatDateThai } from '../utils/dateUtils'; // Keep if needed elsewhere, but not directly used for date input formatting here
 
 interface EditBookingModalProps {
   isOpen: boolean;
   onClose: () => void;
   booking: Booking | null;
   rooms: Room[];
-  onUpdate: (updatedBooking: Booking) => void;
+  departmentCodes: DepartmentCode[]; // Add departmentCodes prop
+  onSave: (updatedBooking: Booking) => void; // Renamed from onUpdate to onSave for consistency
 }
 
-export default function EditBookingModal({ isOpen, onClose, booking, rooms, onUpdate }: EditBookingModalProps) {
+export default function EditBookingModal({ isOpen, onClose, booking, rooms, departmentCodes, onSave }: EditBookingModalProps) {
   const [title, setTitle] = useState('');
   const [roomId, setRoomId] = useState('');
-  const [date, setDate] = useState('');
-  const [startTime, setStartTime] = useState('');
-  const [endTime, setEndTime] = useState('');
+  const [date, setDate] = useState(''); // YYYY-MM-DD
+  const [startTime, setStartTime] = useState(''); // HH:MM
+  const [endTime, setEndTime] = useState(''); // HH:MM
   const [description, setDescription] = useState('');
+  const [departmentCodeId, setDepartmentCodeId] = useState(''); // New state for department code
 
   useEffect(() => {
     if (booking) {
       setTitle(booking.title);
       setRoomId(booking.room_id);
-      setDate(booking.date);
-      setStartTime(booking.start_time);
-      setEndTime(booking.end_time);
       setDescription(booking.description || '');
+      setDepartmentCodeId(booking.department_code_id);
+
+      // Extract date and time from ISO strings
+      const start = new Date(booking.start_time);
+      const end = new Date(booking.end_time);
+
+      setDate(start.toISOString().substring(0, 10)); // YYYY-MM-DD
+      setStartTime(start.toISOString().substring(11, 16)); // HH:MM
+      setEndTime(end.toISOString().substring(11, 16)); // HH:MM
     }
   }, [booking]);
 
   const handleSubmit = () => {
     if (!booking) return;
 
+    // Combine date and time inputs into ISO strings
+    const updatedStartTime = new Date(`${date}T${startTime}:00`).toISOString();
+    const updatedEndTime = new Date(`${date}T${endTime}:00`).toISOString();
+
     const updatedBooking: Booking = {
       ...booking,
       title,
       room_id: roomId,
-      date,
-      start_time: startTime,
-      end_time: endTime,
+      start_time: updatedStartTime,
+      end_time: updatedEndTime,
       description: description,
-      // Keep existing department_name, department_code, contact_person, contact_email
-      // as they are not being edited in this modal
+      department_code_id: departmentCodeId, // Include updated department code
     };
 
-    onUpdate(updatedBooking);
+    onSave(updatedBooking);
   };
 
   if (!booking) return null;
@@ -85,6 +94,22 @@ export default function EditBookingModal({ isOpen, onClose, booking, rooms, onUp
             >
               {rooms.map((room) => (
                 <option key={room.id} value={room.id}>{room.name}</option>
+              ))}
+            </select>
+          </div>
+
+          <div className="mt-4">
+            <label htmlFor="departmentCodeId" className="block text-sm font-medium text-gray-700">
+              แผนก
+            </label>
+            <select
+              id="departmentCodeId"
+              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
+              value={departmentCodeId}
+              onChange={(e) => setDepartmentCodeId(e.target.value)}
+            >
+              {departmentCodes.map((dept) => (
+                <option key={dept.id} value={dept.id}>{dept.name}</option>
               ))}
             </select>
           </div>
