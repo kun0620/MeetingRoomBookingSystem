@@ -26,7 +26,8 @@ export default function TimeSlots({
   const isTimeSelected = (time: string) => {
     if (!selectedStartTime) return false;
     if (!selectedEndTime) return time === selectedStartTime;
-    return time >= selectedStartTime && time < selectedEndTime;
+    // แก้ไขตรงนี้: เปลี่ยนจาก time < selectedEndTime เป็น time <= selectedEndTime
+    return time >= selectedStartTime && time <= selectedEndTime;
   };
 
   const isSelectableAsEndTime = (time: string) => {

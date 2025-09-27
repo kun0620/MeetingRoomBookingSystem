@@ -6,13 +6,14 @@ import { useRooms } from './hooks/useRooms';
 import { useBookings } from './hooks/useBookings';
 import { useAuth } from './hooks/useAuth';
 import RoomCard from './components/RoomCard';
-import Calendar from './components/Calendar';
-import TimeSlots from './components/TimeSlots';
-import BookingForm from './components/BookingForm';
+import Calendar from './components/Calendar'; // Keep for now, might be removed if only used in modal
+import TimeSlots from './components/TimeSlots'; // Keep for now, might be removed if only used in modal
+import BookingForm from './components/BookingForm'; // Keep for now, might be removed if only used in modal
 import BookingList from './components/BookingList';
 import AdminLogin from './components/AdminLogin';
 import AdminDashboard from './components/admin/AdminDashboard';
-import MainLayout from './components/MainLayout'; // Import MainLayout
+import MainLayout from './components/MainLayout';
+import BookingModal from './components/BookingModal'; // Import BookingModal
 import { Loader2, AlertCircle } from 'lucide-react';
 
 type ViewMode = 'booking' | 'management' | 'admin';
@@ -22,71 +23,18 @@ function App() {
   const { bookings, loading: bookingsLoading, error: bookingsError, createBooking, cancelBooking } = useBookings();
   const { user, loading: authLoading, error: authError, loginAdminWithDepartmentCode, logout, isAdmin } = useAuth();
   const [selectedRoom, setSelectedRoom] = useState<Room | null>(null);
-  const [selectedDate, setSelectedDate] = useState<string>(formatDate(new Date()));
-  const [selectedStartTime, setSelectedStartTime] = useState<string>('');
-  const [selectedEndTime, setSelectedEndTime] = useState<string>('');
-  const [showBookingForm, setShowBookingForm] = useState(false);
+  const [showBookingModal, setShowBookingModal] = useState(false); // New state for modal visibility
   const [viewMode, setViewMode] = useState<ViewMode>('booking');
   const [submitting, setSubmitting] = useState(false);
-
-  // Reset selections when switching rooms
-  useEffect(() => {
-    setSelectedStartTime('');
-    setSelectedEndTime('');
-    setShowBookingForm(false);
-  }, [selectedRoom, selectedDate]);
-
-  const getAvailableTimeSlots = (): TimeSlot[] => {
-    if (!selectedRoom || !selectedDate) {
-      return timeSlots.map(time => ({ time, available: true }));
-    }
-
-    const roomBookings = bookings.filter(
-      booking => 
-        booking.room_id === selectedRoom.id && 
-        booking.date === selectedDate &&
-        booking.status === 'confirmed'
-    );
-
-    return timeSlots.map(time => {
-      const isBooked = roomBookings.some(booking => 
-        time >= booking.start_time && time < booking.end_time
-      );
-      
-      const isPast = isPastDate(selectedDate) || 
-        (selectedDate === formatDate(new Date()) && time <= new Date().toTimeString().slice(0, 5));
-      
-      return {
-        time,
-        available: !isBooked && !isPast,
-        booking: roomBookings.find(booking => 
-          time >= booking.start_time && time < booking.end_time
-        )
-      };
-    });
-  };
-
-  const handleTimeSelect = (time: string, type: 'start' | 'end') => {
-    if (type === 'start') {
-      setSelectedStartTime(time);
-      if (selectedEndTime && selectedEndTime <= time) {
-        setSelectedEndTime('');
-      }
-    } else {
-      setSelectedEndTime(time);
-    }
-  };
 
   const handleBookingSubmit = async (bookingData: Omit<Booking, 'id' | 'created_at'>) => {
     try {
       setSubmitting(true);
       await createBooking(bookingData);
-      setShowBookingForm(false);
-      setSelectedStartTime('');
-      setSelectedEndTime('');
       alert('จองห้องประชุมสำเร็จ!');
     } catch (error) {
       alert(`เกิดข้อผิดพลาด: ${error instanceof Error ? error.message : 'ไม่สามารถจองห้องได้'}`);
+      throw error; // Re-throw to allow modal to handle error if needed
     } finally {
       setSubmitting(false);
     }
@@ -102,8 +50,6 @@ function App() {
       }
     }
   };
-
-  const canProceedToBooking = selectedRoom && selectedDate && selectedStartTime && selectedEndTime;
 
   // Admin login handling - now uses department code
   const handleAdminLogin = async (code: string) => {
@@ -183,67 +129,43 @@ function App() {
     >
       {viewMode === 'booking' ? (
         <>
-          {!showBookingForm ? (
-            <>
-              {/* Room Selection */}
-              <section className="mb-8">
-                <h2 className="text-xl font-semibold text-gray-800 mb-6">เลือกห้องประชุม</h2>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {rooms.map(room => (
-                    <RoomCard
-                      key={room.id}
-                      room={room}
-                      onSelect={setSelectedRoom}
-                      isSelected={selectedRoom?.id === room.id}
-                      submitting={submitting}
-                    />
-                  ))}
-                </div>
-              </section>
-
-              {/* Date and Time Selection */}
-              {selectedRoom && (
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
-                  <Calendar
-                    selectedDate={selectedDate}
-                    onDateSelect={setSelectedDate}
-                    bookings={bookings}
-                  />
-                  <TimeSlots
-                    timeSlots={getAvailableTimeSlots()}
-                    selectedStartTime={selectedStartTime}
-                    selectedEndTime={selectedEndTime}
-                    onTimeSelect={handleTimeSelect}
-                  />
-                </div>
-              )}
-
-              {/* Proceed Button */}
-              {canProceedToBooking && (
-                <div className="flex justify-center">
-                  <button
-                    onClick={() => setShowBookingForm(true)}
-                    className="px-8 py-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors font-medium text-lg"
-                  >
-                    ดำเนินการจอง
-                  </button>
-                </div>
-              )}
-            </>
-          ) : (
-            /* Booking Form */
-            selectedRoom && (
-              <div className="max-w-2xl mx-auto">
-                <BookingForm
-                  room={selectedRoom}
-                  selectedDate={selectedDate}
-                  selectedStartTime={selectedStartTime}
-                  selectedEndTime={selectedEndTime}
-                  onSubmit={handleBookingSubmit}
-                  onCancel={() => setShowBookingForm(false)}
+          {/* Room Selection */}
+          <section className="mb-8">
+            <h2 className="text-xl font-semibold text-gray-800 mb-6">เลือกห้องประชุม</h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {rooms.map(room => (
+                <RoomCard
+                  key={room.id}
+                  room={room}
+                  onSelect={setSelectedRoom}
+                  isSelected={selectedRoom?.id === room.id}
+                  submitting={submitting}
                 />
-              </div>
-            )
+              ))}
+            </div>
+          </section>
+
+          {/* Proceed Button to open modal - now fixed at bottom */}
+          {selectedRoom && (
+            <div className="fixed bottom-0 left-0 right-0 bg-transparent p-4 shadow-lg z-30 lg:ml-[290px] flex justify-center">
+              <button
+                onClick={() => setShowBookingModal(true)}
+                className="px-8 py-3 bg-blue-500 border border-blue-500 text-white rounded-lg hover:bg-blue-50 transition-colors font-medium text-lg"
+              >
+                ดำเนินการจองห้อง {selectedRoom.name}
+              </button>
+            </div>
+          )}
+
+          {/* Booking Modal */}
+          {showBookingModal && selectedRoom && (
+            <BookingModal
+              room={selectedRoom}
+              bookings={bookings}
+              onClose={() => setShowBookingModal(false)}
+              onSubmitBooking={handleBookingSubmit}
+              submitting={submitting}
+            />
           )}
         </>
       ) : (
