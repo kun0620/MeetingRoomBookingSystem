@@ -3,7 +3,7 @@ export type Room = {
   name: string;
   capacity: number;
   description: string;
-  image_url: string;
+  image_url: string; // Changed from color to image_url
   created_at: string;
 };
 

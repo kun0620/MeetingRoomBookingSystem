@@ -82,7 +82,7 @@ export interface Database {
           capacity: number
           description: string
           amenities: string[]
-          color: string
+          image_url: string | null // Changed from color to image_url
           created_at: string
         }
         Insert: {
@@ -91,7 +91,7 @@ export interface Database {
           capacity: number
           description: string
           amenities: string[]
-          color: string
+          image_url?: string | null // Changed from color to image_url
           created_at?: string
         }
         Update: {
@@ -100,7 +100,7 @@ export interface Database {
           capacity?: number
           description?: string
           amenities?: string[]
-          color?: string
+          image_url?: string | null // Changed from color to image_url
           created_at?: string
         }
       }
