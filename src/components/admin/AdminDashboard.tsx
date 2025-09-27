@@ -88,7 +88,7 @@ export default function AdminDashboard({ user, onLogout, onBackToMain }: AdminDa
           </button>
         </div>
 
-        <div className="flex flex-col overflow-y-auto duration-300 ease-linear no-scrollbar p-6">
+        <div className="flex flex-col overflow-y-auto duration-300 ease-in-out no-scrollbar p-6">
           <nav className="mb-6">
             <div className="flex flex-col gap-4">
               <div>
@@ -175,9 +175,12 @@ export default function AdminDashboard({ user, onLogout, onBackToMain }: AdminDa
                     <p className="text-sm text-gray-500">ระบบจัดการ</p>
                   </div>
                 </div>
-                <div className="lg:hidden"> {/* Show on mobile, hide on lg+ */}
-                  <h1 className="text-xl font-bold text-gray-900">แอดมิน</h1>
-                  <p className="text-sm text-gray-500">ระบบจัดการ</p>
+                <div className="lg:hidden flex items-center"> {/* Show on mobile, hide on lg+ */}
+                  <Settings className="w-6 h-6 text-blue-500 mr-2" /> {/* Added Settings icon here */}
+                  <div>
+                    <h1 className="text-xl font-bold text-gray-900">แอดมิน</h1>
+                    <p className="text-sm text-gray-500">ระบบจัดการ</p>
+                  </div>
                 </div>
               </div>
             </div>

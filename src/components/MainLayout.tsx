@@ -167,9 +167,12 @@ export default function MainLayout({
                     <p className="text-sm text-gray-500">Meeting Room Booking System</p>
                   </div>
                 </div>
-                <div className="lg:hidden"> {/* Show on mobile, hide on lg+ */}
-                  <h1 className="text-xl font-bold text-gray-900">ระบบจองห้องประชุม</h1>
-                  <p className="text-sm text-gray-500">Meeting Room Booking System</p>
+                <div className="lg:hidden flex items-center"> {/* Show on mobile, hide on lg+ */}
+                  <Building className="w-6 h-6 text-blue-500 mr-2" /> {/* Added Building icon here */}
+                  <div>
+                    <h1 className="text-xl font-bold text-gray-900">ระบบจองห้องประชุม</h1>
+                    <p className="text-sm text-gray-500">Meeting Room Booking System</p>
+                  </div>
                 </div>
               </div>
             </div>
