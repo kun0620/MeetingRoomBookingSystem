@@ -98,6 +98,33 @@ export function useBookings() {
     }
   };
 
+  const updateBooking = async (bookingId: string, updatedBookingData: Partial<Booking>) => {
+    try {
+      const { data, error } = await supabase
+        .from('bookings')
+        .update(updatedBookingData)
+        .eq('id', bookingId)
+        .select()
+        .single();
+
+      if (error) {
+        console.error('Supabase update error:', error);
+        throw error;
+      }
+
+      setBookings(prev =>
+        prev.map(b =>
+          b.id === bookingId ? { ...b, ...updatedBookingData } : b
+        )
+      );
+
+      return data;
+    } catch (err) {
+      console.error('Error in updateBooking hook:', err);
+      throw new Error(err instanceof Error ? err.message : 'เกิดข้อผิดพลาดในการแก้ไขข้อมูลการจอง');
+    }
+  };
+
   return { 
     bookings, 
     loading, 
@@ -105,6 +132,7 @@ export function useBookings() {
     createBooking, 
     cancelBooking, 
     refetch: fetchBookings,
-    cancelling // Expose cancelling state
+    cancelling, // Expose cancelling state
+    updateBooking
   };
 }

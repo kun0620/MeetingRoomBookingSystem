@@ -1,0 +1,165 @@
+import React, { useState, useEffect } from 'react';
+import { Dialog } from '@headlessui/react';
+import { Booking, Room } from '../types';
+import { formatDateThai } from '../utils/dateUtils';
+import { useRooms } from '../hooks/useRooms';
+
+interface EditBookingModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  booking: Booking | null;
+  rooms: Room[];
+  onUpdate: (updatedBooking: Booking) => void;
+}
+
+export default function EditBookingModal({ isOpen, onClose, booking, rooms, onUpdate }: EditBookingModalProps) {
+  const [title, setTitle] = useState('');
+  const [roomId, setRoomId] = useState('');
+  const [date, setDate] = useState('');
+  const [startTime, setStartTime] = useState('');
+  const [endTime, setEndTime] = useState('');
+  const [description, setDescription] = useState('');
+
+  useEffect(() => {
+    if (booking) {
+      setTitle(booking.title);
+      setRoomId(booking.room_id);
+      setDate(booking.date);
+      setStartTime(booking.start_time);
+      setEndTime(booking.end_time);
+      setDescription(booking.description || '');
+    }
+  }, [booking]);
+
+  const handleSubmit = () => {
+    if (!booking) return;
+
+    const updatedBooking: Booking = {
+      ...booking,
+      title,
+      room_id: roomId,
+      date,
+      start_time: startTime,
+      end_time: endTime,
+      description: description,
+      // Keep existing department_name, department_code, contact_person, contact_email
+      // as they are not being edited in this modal
+    };
+
+    onUpdate(updatedBooking);
+  };
+
+  if (!booking) return null;
+
+  return (
+    <Dialog open={isOpen} onClose={onClose} className="relative z-50">
+      <div className="fixed inset-0 bg-black/30" aria-hidden="true" />
+      <div className="fixed inset-0 flex items-center justify-center p-4">
+        <Dialog.Panel className="bg-white rounded-lg p-6 w-full max-w-md">
+          <Dialog.Title className="text-lg font-semibold text-gray-900">
+            แก้ไขรายละเอียดการจอง
+          </Dialog.Title>
+
+          <div className="mt-4">
+            <label htmlFor="title" className="block text-sm font-medium text-gray-700">
+              หัวข้อการจอง
+            </label>
+            <input
+              type="text"
+              id="title"
+              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+            />
+          </div>
+
+          <div className="mt-4">
+            <label htmlFor="roomId" className="block text-sm font-medium text-gray-700">
+              ห้องประชุม
+            </label>
+            <select
+              id="roomId"
+              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
+              value={roomId}
+              onChange={(e) => setRoomId(e.target.value)}
+            >
+              {rooms.map((room) => (
+                <option key={room.id} value={room.id}>{room.name}</option>
+              ))}
+            </select>
+          </div>
+
+          <div className="mt-4">
+            <label htmlFor="date" className="block text-sm font-medium text-gray-700">
+              วันที่
+            </label>
+            <input
+              type="date"
+              id="date"
+              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
+              value={date}
+              onChange={(e) => setDate(e.target.value)}
+            />
+          </div>
+
+          <div className="mt-4 grid grid-cols-2 gap-4">
+            <div>
+              <label htmlFor="startTime" className="block text-sm font-medium text-gray-700">
+                เวลาเริ่มต้น
+              </label>
+              <input
+                type="time"
+                id="startTime"
+                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
+                value={startTime}
+                onChange={(e) => setStartTime(e.target.value)}
+              />
+            </div>
+            <div>
+              <label htmlFor="endTime" className="block text-sm font-medium text-gray-700">
+                เวลาสิ้นสุด
+              </label>
+              <input
+                type="time"
+                id="endTime"
+                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
+                value={endTime}
+                onChange={(e) => setEndTime(e.target.value)}
+              />
+            </div>
+          </div>
+
+          <div className="mt-4">
+            <label htmlFor="description" className="block text-sm font-medium text-gray-700">
+              รายละเอียดเพิ่มเติม
+            </label>
+            <textarea
+              id="description"
+              rows={3}
+              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+            ></textarea>
+          </div>
+
+          <div className="mt-6 flex justify-end">
+            <button
+              type="button"
+              className="rounded-md border border-gray-300 bg-white py-2 px-4 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+              onClick={onClose}
+            >
+              ยกเลิก
+            </button>
+            <button
+              type="button"
+              className="ml-3 rounded-md border border-transparent bg-blue-600 py-2 px-4 text-sm font-medium text-white shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+              onClick={handleSubmit}
+            >
+              บันทึก
+            </button>
+          </div>
+        </Dialog.Panel>
+      </div>
+    </Dialog>
+  );
+}

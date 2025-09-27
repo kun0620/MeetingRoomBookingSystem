@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Booking, Room, DepartmentCode } from '../types';
 import { formatDateThai } from '../utils/dateUtils';
-import { Calendar, Search, Filter, ChevronDown, ChevronUp, Clock, User, Tag, Mail, Phone, X } from 'lucide-react';
+import { Calendar, Search, Filter, ChevronDown, Clock, User, Tag, Mail, Phone, X } from 'lucide-react';
 
 interface BookingListProps {
   bookings: Booking[];
@@ -148,8 +148,7 @@ export default function BookingList({
                 <details className="mt-3 pt-3 border-t border-gray-100">
                   <summary className="flex items-center justify-between text-sm font-medium text-gray-700 cursor-pointer">
                     <span>รายละเอียดเพิ่มเติม</span>
-                    <ChevronDown className="w-4 h-4 details-open:hidden" />
-                    <ChevronUp className="w-4 h-4 details-closed:hidden" />
+                    <ChevronDown className="w-4 h-4 transition-transform duration-200 group-open:rotate-180" />
                   </summary>
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-3">
                     <div className="space-y-2">

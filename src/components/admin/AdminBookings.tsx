@@ -2,18 +2,22 @@ import React, { useState } from 'react';
 import { useBookings } from '../../hooks/useBookings';
 import { useRooms } from '../../hooks/useRooms';
 import { useDepartmentCodes } from '../../hooks/useDepartmentCodes'; // Import the new hook
-import { Calendar, Clock, User, Phone, Mail, X, Search, Filter, Loader2, ChevronDown, ChevronUp, Tag } from 'lucide-react';
+import { Calendar, Clock, User, Phone, Mail, X, Search, Filter, Loader2, ChevronDown, Tag, Edit } from 'lucide-react'; // Add Edit icon
 import { formatDateThai } from '../../utils/dateUtils';
 import CancelBookingModal from '../CancelBookingModal'; // Import the CancelBookingModal
+import EditBookingModal from '../EditBookingModal'; // Import the EditBookingModal
+import { Booking } from '../../types'; // Import Booking type
 
 export default function AdminBookings() {
-  const { bookings, loading, cancelBooking, cancelling } = useBookings(); // Get 'cancelling' state
+  const { bookings, loading, cancelBooking, cancelling, updateBooking } = useBookings(); // Get 'cancelling' and 'updateBooking' state/function
   const { rooms } = useRooms();
   const { getDepartmentNameByCode } = useDepartmentCodes(); // Use the new hook
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<'all' | 'confirmed' | 'cancelled'>('all');
   const [showCancelModal, setShowCancelModal] = useState(false);
   const [selectedBookingForCancel, setSelectedBookingForCancel] = useState<{ id: string; title: string } | null>(null);
+  const [showEditModal, setShowEditModal] = useState(false); // State for edit modal
+  const [selectedBookingForEdit, setSelectedBookingForEdit] = useState<Booking | null>(null); // State for selected booking to edit
 
   const getRoomById = (roomId: string) => rooms.find(room => room.id === roomId);
 
@@ -25,7 +29,7 @@ export default function AdminBookings() {
       booking.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
       booking.user_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       booking.user_email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      departmentName.toLowerCase().includes(searchTerm.toLowerCase()) || // Search by department name
+      (departmentName?.toLowerCase().includes(searchTerm.toLowerCase()) ?? false) || // Search by department name
       (room?.name.toLowerCase().includes(searchTerm.toLowerCase()) ?? false); // Search by room name
     
     const matchesStatus = statusFilter === 'all' || booking.status === statusFilter;
@@ -50,6 +54,28 @@ export default function AdminBookings() {
       handleCloseCancelModal();
     } catch (error) {
       alert(`เกิดข้อผิดพลาด: ${error instanceof Error ? error.message : 'ไม่สามารถยกเลิกการจองได้'}`);
+    }
+  };
+
+  const handleOpenEditModal = (booking: Booking) => {
+    setSelectedBookingForEdit(booking);
+    setShowEditModal(true);
+  };
+
+  const handleCloseEditModal = () => {
+    setShowEditModal(false);
+    setSelectedBookingForEdit(null);
+  };
+
+  const handleUpdateBooking = async (updatedBooking: Booking) => {
+    try {
+      if (updatedBooking.id) {
+        await updateBooking(updatedBooking.id, updatedBooking);
+        alert('แก้ไขการจองสำเร็จ!');
+        handleCloseEditModal();
+      }
+    } catch (error) {
+      alert(`เกิดข้อผิดพลาด: ${error instanceof Error ? error.message : 'ไม่สามารถแก้ไขการจองได้'}`);
     }
   };
 
@@ -137,14 +163,23 @@ export default function AdminBookings() {
                     </span>
                     
                     {booking.status === 'confirmed' && (
-                      <button
-                        onClick={() => handleOpenCancelModal(booking.id, booking.title)}
-                        className="text-red-500 hover:text-red-700 hover:bg-red-50 p-2 rounded-full transition-colors"
-                        title="ยกเลิกการจอง"
-                        disabled={cancelling}
-                      >
-                        <X className="w-4 h-4" />
-                      </button>
+                      <>
+                        <button
+                          onClick={() => handleOpenEditModal(booking)}
+                          className="text-blue-500 hover:text-blue-700 hover:bg-blue-50 p-2 rounded-full transition-colors"
+                          title="แก้ไขการจอง"
+                        >
+                          <Edit className="w-4 h-4" />
+                        </button>
+                        <button
+                          onClick={() => handleOpenCancelModal(booking.id, booking.title)}
+                          className="text-red-500 hover:text-red-700 hover:bg-red-50 p-2 rounded-full transition-colors"
+                          title="ยกเลิกการจอง"
+                          disabled={cancelling}
+                        >
+                          <X className="w-4 h-4" />
+                        </button>
+                      </>
                     )}
                   </div>
                 </div>
@@ -152,8 +187,7 @@ export default function AdminBookings() {
                 <details className="mt-3 pt-3 border-t border-gray-100">
                   <summary className="flex items-center justify-between text-sm font-medium text-gray-700 cursor-pointer">
                     <span>รายละเอียดเพิ่มเติม</span>
-                    <ChevronDown className="w-4 h-4 details-open:hidden" />
-                    <ChevronUp className="w-4 h-4 details-closed:hidden" />
+                    <ChevronDown className="w-4 h-4 transition-transform duration-200 group-open:rotate-180" />
                   </summary>
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-3">
                     <div className="space-y-2">
@@ -206,6 +240,16 @@ export default function AdminBookings() {
           onConfirm={handleConfirmCancel}
           onClose={handleCloseCancelModal}
           submitting={cancelling}
+        />
+      )}
+
+      {showEditModal && selectedBookingForEdit && (
+        <EditBookingModal
+          isOpen={showEditModal}
+          onClose={handleCloseEditModal}
+          booking={selectedBookingForEdit}
+          rooms={rooms}
+          onUpdate={handleUpdateBooking}
         />
       )}
     </div>

@@ -3,7 +3,8 @@ import Calendar from '../../components/Calendar';
 import { useBookings } from '../../hooks/useBookings';
 import { useRooms } from '../../hooks/useRooms';
 import { formatDateThai } from '../../utils/dateUtils';
-import { Loader2, AlertCircle, Calendar as CalendarIcon, Search, Filter, ChevronDown } from 'lucide-react';
+import { Loader2, AlertCircle, Calendar as CalendarIcon, Search, Filter, ChevronDown, Edit } from 'lucide-react';
+import EditBookingModal from '../../components/EditBookingModal';
 
 export default function BookingStatusPage() {
   const [selectedDate, setSelectedDate] = useState(formatDateThai(new Date()));
@@ -12,9 +13,11 @@ export default function BookingStatusPage() {
   const [error, setError] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [selectedBooking, setSelectedBooking] = useState(null);
 
   const { rooms } = useRooms();
-  const { bookings: allBookings, loading: bookingsLoading, error: bookingsError } = useBookings();
+  const { bookings: allBookings, loading: bookingsLoading, error: bookingsError, updateBooking } = useBookings();
 
   useEffect(() => {
     if (allBookings) {
@@ -46,6 +49,26 @@ export default function BookingStatusPage() {
         return dateMatch && searchTermMatch && statusMatch;
       })
     : [];
+
+  const handleEditClick = (booking) => {
+    setSelectedBooking(booking);
+    setIsEditModalOpen(true);
+  };
+
+  const handleUpdateBooking = async (updatedBooking) => {
+    try {
+      await updateBooking(updatedBooking.id, updatedBooking);
+      setIsEditModalOpen(false);
+      // Refresh bookings or update state as needed
+      const updatedBookings = bookings.map(booking =>
+        booking.id === updatedBooking.id ? updatedBooking : booking
+      );
+      setBookings(updatedBookings);
+    } catch (error) {
+      console.error("Error updating booking:", error);
+      setError("Failed to update booking.");
+    }
+  };
 
   return (
     <div className="min-h-screen bg-gray-50 p-4 sm:p-6 lg:p-8">
@@ -148,6 +171,9 @@ export default function BookingStatusPage() {
                           <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                             แผนก
                           </th>
+                          <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Actions
+                          </th>
                         </tr>
                       </thead>
                       <tbody className="bg-white divide-y divide-gray-200">
@@ -172,6 +198,14 @@ export default function BookingStatusPage() {
                               <td className="px-6 py-4 whitespace-nowrap">
                                 <div className="text-sm text-gray-900">{departmentName}</div>
                               </td>
+                              <td className="px-6 py-4 whitespace-nowrap text-right">
+                                <button
+                                  onClick={() => handleEditClick(booking)}
+                                  className="text-blue-500 hover:text-blue-700 focus:outline-none"
+                                >
+                                  <Edit className="w-5 h-5" />
+                                </button>
+                              </td>
                             </tr>
                           );
                         })}
@@ -184,6 +218,13 @@ export default function BookingStatusPage() {
           </div>
         </div>
       </main>
+      <EditBookingModal
+        isOpen={isEditModalOpen}
+        onClose={() => setIsEditModalOpen(false)}
+        booking={selectedBooking}
+        rooms={rooms}
+        onUpdate={handleUpdateBooking}
+      />
     </div>
   );
 }

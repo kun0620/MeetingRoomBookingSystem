@@ -118,6 +118,9 @@ export interface Database {
           date: string
           status: 'pending' | 'confirmed' | 'cancelled'
           department_code: string
+          department_name: string | null
+          contact_person: string | null
+          contact_email: string | null
           created_at: string
         }
         Insert: {
@@ -133,6 +136,9 @@ export interface Database {
           date: string
           status?: 'pending' | 'confirmed' | 'cancelled'
           department_code?: string
+          department_name?: string | null
+          contact_person?: string | null
+          contact_email?: string | null
           created_at?: string
         }
         Update: {
@@ -148,6 +154,9 @@ export interface Database {
           date?: string
           status?: 'pending' | 'confirmed' | 'cancelled'
           department_code?: string
+          department_name?: string | null
+          contact_person?: string | null
+          contact_email?: string | null
           created_at?: string
         }
       }

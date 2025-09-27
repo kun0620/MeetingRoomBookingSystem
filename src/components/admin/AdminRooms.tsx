@@ -16,18 +16,11 @@ export default function AdminRooms() {
     capacity: 0,
     description: '',
     amenities: [] as string[],
-    color: 'from-blue-500 to-blue-600'
+    color: 'from-blue-500 to-blue-600', // Keep color for now, as it's in the type and will be passed through
+    image_url: '' // Add image_url
   });
 
-  const colorOptions = [
-    { value: 'from-blue-500 to-blue-600', label: 'น้ำเงิน' },
-    { value: 'from-green-500 to-green-600', label: 'เขียว' },
-    { value: 'from-orange-500 to-orange-600', label: 'ส้ม' },
-    { value: 'from-purple-500 to-purple-600', label: 'ม่วง' },
-    { value: 'from-red-500 to-red-600', label: 'แดง' },
-    { value: 'from-emerald-500 to-emerald-600', label: 'เขียวมรกต' }
-  ];
-
+  // Removed colorOptions as it's no longer needed for selection
   const amenityOptions = [
     'โปรเจคเตอร์',
     'จอ LED TV',
@@ -47,7 +40,8 @@ export default function AdminRooms() {
       capacity: 0,
       description: '',
       amenities: [],
-      color: 'from-blue-500 to-blue-600'
+      color: 'from-blue-500 to-blue-600', // Reset to a default color
+      image_url: ''
     });
     setEditingRoom(null);
     setShowForm(false);
@@ -66,7 +60,8 @@ export default function AdminRooms() {
       capacity: room.capacity,
       description: room.description,
       amenities: room.amenities,
-      color: room.color
+      color: room.color, // Populate existing color, but it won't be editable
+      image_url: room.image_url || '' // Populate image_url
     });
     setEditingRoom(room);
     setShowForm(true);
@@ -78,7 +73,7 @@ export default function AdminRooms() {
 
     try {
       if (editingRoom) {
-        // For updating, send all formData including id
+        // For updating, send all formData including id and existing color
         await updateRoom(editingRoom.id, formData);
         alert('อัปเดตห้องสำเร็จ!');
       } else {
@@ -88,7 +83,7 @@ export default function AdminRooms() {
       }
       resetForm();
     } catch (error) {
-      console.error('Error in handleSubmit:', error); // เพิ่มการ log ข้อผิดพลาดใน handleSubmit
+      console.error('Error in handleSubmit:', error);
       alert(`เกิดข้อผิดพลาด: ${error instanceof Error ? error.message : 'ไม่สามารถบันทึกข้อมูลได้'}`);
     } finally {
       setSubmitting(false);
@@ -101,7 +96,7 @@ export default function AdminRooms() {
         await deleteRoom(roomId);
         alert('ลบห้องสำเร็จ!');
       } catch (error) {
-        console.error('Error in handleDelete:', error); // เพิ่มการ log ข้อผิดพลาดใน handleDelete
+        console.error('Error in handleDelete:', error);
         alert(`เกิดข้อผิดพลาด: ${error instanceof Error ? error.message : 'ไม่สามารถลบห้องได้'}`);
       }
     }
@@ -145,17 +140,20 @@ export default function AdminRooms() {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
           {rooms.map((room) => (
             <div key={room.id} className="border border-gray-200 rounded-lg overflow-hidden">
-              <div className={`h-24 bg-gradient-to-br ${room.color} flex items-center justify-center`}>
-                <div className="text-center text-white">
-                  <h3 className="font-bold">{room.name}</h3>
-                  <div className="flex items-center justify-center text-sm">
-                    <Users className="w-4 h-4 mr-1" />
-                    {room.capacity} คน
-                  </div>
-                </div>
+              <div className="h-32 overflow-hidden">
+                <img 
+                  src={room.image_url || 'https://images.pexels.com/photos/260689/pexels-photo-260689.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2'} 
+                  alt={room.name} 
+                  className="w-full h-full object-cover" 
+                />
               </div>
               
               <div className="p-4">
+                <h3 className="font-bold text-gray-800 mb-1">{room.name}</h3>
+                <div className="flex items-center text-gray-600 text-sm mb-3">
+                  <Users className="w-4 h-4 mr-1" />
+                  {room.capacity} คน
+                </div>
                 <p className="text-gray-600 text-sm mb-3">{room.description}</p>
                 <div className="flex justify-between items-center">
                   <span className="text-xs text-gray-500">
@@ -239,22 +237,20 @@ export default function AdminRooms() {
                     />
                   </div>
 
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      สีธีม
-                    </label>
-                    <select
-                      value={formData.color}
-                      onChange={(e) => setFormData(prev => ({ ...prev, color: e.target.value }))}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    >
-                      {colorOptions.map(option => (
-                        <option key={option.value} value={option.value}>
-                          {option.label}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
+                  {/* Removed the color theme selection input */}
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    URL รูปภาพห้อง
+                  </label>
+                  <input
+                    type="url"
+                    value={formData.image_url}
+                    onChange={(e) => setFormData(prev => ({ ...prev, image_url: e.target.value }))}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    placeholder="เช่น https://images.pexels.com/photos/..."
+                  />
                 </div>
 
                 <div>

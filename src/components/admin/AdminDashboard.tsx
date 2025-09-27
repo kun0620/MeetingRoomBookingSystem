@@ -77,7 +77,7 @@ export default function AdminDashboard({ user, onLogout, onBackToMain }: AdminDa
       >
         <div className="py-4 px-6 flex items-center justify-between border-b border-gray-200 lg:justify-start">
           <div className="flex items-center">
-            <Settings className="w-7 h-7 text-blue-500 mr-2" />
+            <Settings className="w-7 h-7 text-gray-700 mr-2" /> {/* Changed from text-blue-500 */}
             <h1 className="text-xl font-bold text-gray-900">แอดมิน</h1>
           </div>
           <button
@@ -106,12 +106,12 @@ export default function AdminDashboard({ user, onLogout, onBackToMain }: AdminDa
                           className={`flex items-center w-full px-4 py-2 rounded-lg font-medium transition-colors group
                             ${
                               currentView === item.id
-                                ? 'bg-blue-500 text-white'
+                                ? 'bg-gray-200 text-gray-900' // Changed from bg-blue-500 text-white
                                 : 'text-gray-700 hover:bg-gray-100'
                             }`}
                         >
-                          <Icon className={`w-4 h-4 mr-3 ${currentView === item.id ? 'text-white' : 'text-gray-500 group-hover:text-blue-500'}`} />
-                          <span className={`${currentView === item.id ? 'text-white' : 'text-gray-700 group-hover:text-gray-900'}`}>{item.label}</span>
+                          <Icon className={`w-4 h-4 mr-3 ${currentView === item.id ? 'text-gray-700' : 'text-gray-500 group-hover:text-gray-700'}`} /> {/* Changed icon colors */}
+                          <span className={`${currentView === item.id ? 'text-gray-900' : 'text-gray-700 group-hover:text-gray-900'}`}>{item.label}</span> {/* Changed text colors */}
                         </button>
                       </li>
                     );
@@ -124,8 +124,8 @@ export default function AdminDashboard({ user, onLogout, onBackToMain }: AdminDa
           {/* User info, Home, Logout buttons moved to sidebar for consistency */}
           <div className="mt-auto pt-6 border-t border-gray-200">
             <div className="flex items-center mb-4">
-              <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center mr-3">
-                <Users className="w-4 h-4 text-blue-600" />
+              <div className="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center mr-3"> {/* Changed from bg-blue-100 */}
+                <Users className="w-4 h-4 text-gray-600" /> {/* Changed from text-blue-600 */}
               </div>
               <div>
                 <p className="text-sm font-medium text-gray-900">{user.name || 'ผู้ดูแลระบบ'}</p>
@@ -135,7 +135,7 @@ export default function AdminDashboard({ user, onLogout, onBackToMain }: AdminDa
 
             <button
               onClick={onBackToMain}
-              className="flex items-center w-full px-4 py-2 text-gray-600 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors mb-2"
+              className="flex items-center w-full px-4 py-2 text-gray-600 hover:text-gray-800 hover:bg-gray-50 rounded-lg transition-colors mb-2" // Changed hover text color
               title="กลับสู่หน้าหลัก"
             >
               <Home className="w-4 h-4 mr-3" />
@@ -169,14 +169,14 @@ export default function AdminDashboard({ user, onLogout, onBackToMain }: AdminDa
                   <Menu className="w-5 h-5" />
                 </button>
                 <div className="hidden lg:flex items-center"> {/* Hide on mobile, show on lg+ */}
-                  <Settings className="w-8 h-8 text-blue-500 mr-3" />
+                  <Settings className="w-8 h-8 text-gray-700 mr-3" /> {/* Changed from text-blue-500 */}
                   <div>
                     <h1 className="text-2xl font-bold text-gray-900">แอดมิน</h1>
                     <p className="text-sm text-gray-500">ระบบจัดการ</p>
                   </div>
                 </div>
                 <div className="lg:hidden flex items-center"> {/* Show on mobile, hide on lg+ */}
-                  <Settings className="w-6 h-6 text-blue-500 mr-2" /> {/* Added Settings icon here */}
+                  <Settings className="w-6 h-6 text-gray-700 mr-2" /> {/* Changed from text-blue-500 */}
                   <div>
                     <h1 className="text-xl font-bold text-gray-900">แอดมิน</h1>
                     <p className="text-sm text-gray-500">ระบบจัดการ</p>
