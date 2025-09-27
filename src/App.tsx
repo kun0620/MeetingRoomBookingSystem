@@ -1,31 +1,30 @@
 import React, { useState, useEffect } from 'react';
-import { Room, Booking, TimeSlot } from './types';
+import { Room, Booking, TimeSlot, ViewMode } from './types'; // Import ViewMode
 import { timeSlots } from './utils/timeSlots';
 import { formatDate, isPastDate } from './utils/dateUtils';
 import { useRooms } from './hooks/useRooms';
 import { useBookings } from './hooks/useBookings';
 import { useAuth } from './hooks/useAuth';
 import RoomCard from './components/RoomCard';
-import Calendar from './components/Calendar'; // Keep for now, might be removed if only used in modal
-import TimeSlots from './components/TimeSlots'; // Keep for now, might be removed if only used in modal
-import BookingForm from './components/BookingForm'; // Keep for now, might be removed if only used in modal
+import Calendar from './components/Calendar';
+import TimeSlots from './components/TimeSlots';
+import BookingForm from './components/BookingForm';
 import BookingList from './components/BookingList';
 import AdminLogin from './components/AdminLogin';
 import AdminDashboard from './components/admin/AdminDashboard';
 import MainLayout from './components/MainLayout';
-import BookingModal from './components/BookingModal'; // Import BookingModal
+import BookingModal from './components/BookingModal';
 import { Loader2, AlertCircle } from 'lucide-react';
-
-type ViewMode = 'booking' | 'management' | 'admin';
 
 function App() {
   const { rooms, loading: roomsLoading, error: roomsError } = useRooms();
   const { bookings, loading: bookingsLoading, error: bookingsError, createBooking, cancelBooking } = useBookings();
   const { user, loading: authLoading, error: authError, loginAdminWithDepartmentCode, logout, isAdmin } = useAuth();
   const [selectedRoom, setSelectedRoom] = useState<Room | null>(null);
-  const [showBookingModal, setShowBookingModal] = useState(false); // New state for modal visibility
-  const [viewMode, setViewMode] = useState<ViewMode>('booking');
+  const [showBookingModal, setShowBookingModal] = useState(false);
+  const [viewMode, setViewMode] = useState<ViewMode>('booking'); // Use ViewMode type
   const [submitting, setSubmitting] = useState(false);
+  const [selectedDateForStatus, setSelectedDateForStatus] = useState<string>(formatDate(new Date())); // New state for calendar in status view
 
   const handleBookingSubmit = async (bookingData: Omit<Booking, 'id' | 'created_at'>) => {
     try {
@@ -34,7 +33,7 @@ function App() {
       alert('จองห้องประชุมสำเร็จ!');
     } catch (error) {
       alert(`เกิดข้อผิดพลาด: ${error instanceof Error ? error.message : 'ไม่สามารถจองห้องได้'}`);
-      throw error; // Re-throw to allow modal to handle error if needed
+      throw error;
     } finally {
       setSubmitting(false);
     }
@@ -51,16 +50,19 @@ function App() {
     }
   };
 
-  // Admin login handling - now uses department code
   const handleAdminLogin = async (code: string) => {
-    const success = await loginAdminWithDepartmentCode(code); // Call the new function
+    const success = await loginAdminWithDepartmentCode(code);
     if (success) {
       setViewMode('admin');
     }
     return success;
   };
 
-  // Loading state
+  // Filter bookings for the status page based on selectedDateForStatus
+  const filteredBookingsForStatus = bookings.filter(booking => 
+    booking.date === selectedDateForStatus
+  );
+
   if (roomsLoading || bookingsLoading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -72,7 +74,6 @@ function App() {
     );
   }
 
-  // Error state
   if (roomsError || bookingsError) {
     console.error('App errors:', { roomsError, bookingsError });
     return (
@@ -92,19 +93,17 @@ function App() {
     );
   }
 
-  // Admin login view
   if (viewMode === 'admin' && !user) {
     return (
       <AdminLogin 
         onLogin={handleAdminLogin}
         loading={authLoading}
         error={authError}
-        onBackToMain={() => setViewMode('booking')} // Pass the function to go back
+        onBackToMain={() => setViewMode('booking')}
       />
     );
   }
 
-  // Admin dashboard view
   if (viewMode === 'admin' && user && isAdmin) {
     return (
       <AdminDashboard 
@@ -129,7 +128,6 @@ function App() {
     >
       {viewMode === 'booking' ? (
         <>
-          {/* Room Selection */}
           <section className="mb-8">
             <h2 className="text-xl font-semibold text-gray-800 mb-6">เลือกห้องประชุม</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -145,7 +143,6 @@ function App() {
             </div>
           </section>
 
-          {/* Proceed Button to open modal - now fixed at bottom */}
           {selectedRoom && (
             <div className="fixed bottom-0 left-0 right-0 bg-transparent p-4 shadow-lg z-30 lg:ml-[290px] flex justify-center">
               <button
@@ -157,7 +154,6 @@ function App() {
             </div>
           )}
 
-          {/* Booking Modal */}
           {showBookingModal && selectedRoom && (
             <BookingModal
               room={selectedRoom}
@@ -169,12 +165,27 @@ function App() {
           )}
         </>
       ) : (
-        /* Booking Management */
-        <BookingList
-          bookings={bookings}
-          rooms={rooms}
-          onCancelBooking={handleCancelBooking}
-        />
+        /* Booking Status View */
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          <div className="lg:col-span-1">
+            <h2 className="text-xl font-semibold text-gray-800 mb-6">ปฏิทินสถานะการจอง</h2>
+            <Calendar
+              selectedDate={selectedDateForStatus}
+              onDateSelect={setSelectedDateForStatus}
+              bookings={bookings} // Pass all bookings to highlight days
+            />
+          </div>
+          <div className="lg:col-span-2">
+            <h2 className="text-xl font-semibold text-gray-800 mb-6">
+              การจองสำหรับวันที่ {formatDate(new Date(selectedDateForStatus), 'thai')}
+            </h2>
+            <BookingList
+              bookings={filteredBookingsForStatus} // Pass filtered bookings
+              rooms={rooms}
+              onCancelBooking={handleCancelBooking}
+            />
+          </div>
+        </div>
       )}
     </MainLayout>
   );

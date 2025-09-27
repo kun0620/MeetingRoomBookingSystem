@@ -117,6 +117,7 @@ export interface Database {
           end_time: string
           date: string
           status: 'pending' | 'confirmed' | 'cancelled'
+          department_code: string
           created_at: string
         }
         Insert: {
@@ -131,6 +132,7 @@ export interface Database {
           end_time: string
           date: string
           status?: 'pending' | 'confirmed' | 'cancelled'
+          department_code?: string
           created_at?: string
         }
         Update: {
@@ -145,6 +147,7 @@ export interface Database {
           end_time?: string
           date?: string
           status?: 'pending' | 'confirmed' | 'cancelled'
+          department_code?: string
           created_at?: string
         }
       }

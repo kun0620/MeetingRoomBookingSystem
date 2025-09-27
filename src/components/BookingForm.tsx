@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Room, Booking } from '../types';
-import { User, Mail, Phone, FileText, Calendar, Loader2 } from 'lucide-react';
+import { User, Mail, Phone, FileText, Calendar, Loader2, Tag } from 'lucide-react'; // Added Tag icon
 import { formatDateThai } from '../utils/dateUtils';
 
 interface BookingFormProps {
@@ -27,7 +27,8 @@ export default function BookingForm({
     user_email: '',
     user_phone: '',
     title: '',
-    description: ''
+    description: '',
+    department_code: '' // Added department_code to form data
   });
 
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -51,6 +52,10 @@ export default function BookingForm({
 
     if (!formData.title.trim()) {
       newErrors.title = 'กรุณาระบุหัวข้อการประชุม';
+    }
+
+    if (!formData.department_code.trim()) { // Validate department_code
+      newErrors.department_code = 'กรุณาระบุรหัสแผนก';
     }
 
     setErrors(newErrors);
@@ -180,6 +185,25 @@ export default function BookingForm({
           />
           {errors.title && (
             <p className="text-red-500 text-sm mt-1">{errors.title}</p>
+          )}
+        </div>
+
+        <div>
+          <label className="flex items-center text-sm font-medium text-gray-700 mb-2">
+            <Tag className="w-4 h-4 mr-2" /> {/* New icon for department code */}
+            รหัสแผนก *
+          </label>
+          <input
+            type="text"
+            value={formData.department_code}
+            onChange={(e) => handleChange('department_code', e.target.value)}
+            className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors ${
+              errors.department_code ? 'border-red-500' : 'border-gray-300'
+            }`}
+            placeholder="เช่น IT, HR, MKG"
+          />
+          {errors.department_code && (
+            <p className="text-red-500 text-sm mt-1">{errors.department_code}</p>
           )}
         </div>
 

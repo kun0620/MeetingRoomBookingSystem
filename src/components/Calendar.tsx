@@ -39,7 +39,8 @@ export default function Calendar({ selectedDate, onDateSelect, bookings }: Calen
     for (let day = 1; day <= daysInMonth; day++) {
       const date = new Date(year, month, day);
       const dateString = formatDate(date);
-      const dayBookings = bookings.filter(booking => booking.date === dateString);
+      // Filter out cancelled bookings
+      const dayBookings = bookings.filter(booking => booking.date === dateString && booking.status !== 'cancelled');
       
       days.push({
         date: dateString,

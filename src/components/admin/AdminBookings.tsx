@@ -1,36 +1,55 @@
 import React, { useState } from 'react';
 import { useBookings } from '../../hooks/useBookings';
 import { useRooms } from '../../hooks/useRooms';
-import { Calendar, Clock, User, Phone, Mail, X, Search, Filter, Loader2, ChevronDown, ChevronUp } from 'lucide-react';
+import { useDepartmentCodes } from '../../hooks/useDepartmentCodes'; // Import the new hook
+import { Calendar, Clock, User, Phone, Mail, X, Search, Filter, Loader2, ChevronDown, ChevronUp, Tag } from 'lucide-react';
 import { formatDateThai } from '../../utils/dateUtils';
+import CancelBookingModal from '../CancelBookingModal'; // Import the CancelBookingModal
 
 export default function AdminBookings() {
-  const { bookings, loading, cancelBooking } = useBookings();
+  const { bookings, loading, cancelBooking, cancelling } = useBookings(); // Get 'cancelling' state
   const { rooms } = useRooms();
+  const { getDepartmentNameByCode } = useDepartmentCodes(); // Use the new hook
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<'all' | 'confirmed' | 'cancelled'>('all');
+  const [showCancelModal, setShowCancelModal] = useState(false);
+  const [selectedBookingForCancel, setSelectedBookingForCancel] = useState<{ id: string; title: string } | null>(null);
 
   const getRoomById = (roomId: string) => rooms.find(room => room.id === roomId);
 
   const filteredBookings = bookings.filter(booking => {
+    const room = getRoomById(booking.room_id);
+    const departmentName = getDepartmentNameByCode(booking.department_code); // Get department name for search
+
     const matchesSearch = 
       booking.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
       booking.user_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      booking.user_email.toLowerCase().includes(searchTerm.toLowerCase());
+      booking.user_email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      departmentName.toLowerCase().includes(searchTerm.toLowerCase()) || // Search by department name
+      (room?.name.toLowerCase().includes(searchTerm.toLowerCase()) ?? false); // Search by room name
     
     const matchesStatus = statusFilter === 'all' || booking.status === statusFilter;
     
     return matchesSearch && matchesStatus;
   });
 
-  const handleCancelBooking = async (bookingId: string, title: string) => {
-    if (confirm(`คุณต้องการยกเลิกการจอง "${title}" หรือไม่?`)) {
-      try {
-        await cancelBooking(bookingId);
-        alert('ยกเลิกการจองสำเร็จ!');
-      } catch (error) {
-        alert(`เกิดข้อผิดพลาด: ${error instanceof Error ? error.message : 'ไม่สามารถยกเลิกการจองได้'}`);
-      }
+  const handleOpenCancelModal = (bookingId: string, bookingTitle: string) => {
+    setSelectedBookingForCancel({ id: bookingId, title: bookingTitle });
+    setShowCancelModal(true);
+  };
+
+  const handleCloseCancelModal = () => {
+    setShowCancelModal(false);
+    setSelectedBookingForCancel(null);
+  };
+
+  const handleConfirmCancel = async (bookingId: string, departmentCode: string) => { // Now receives departmentCode
+    try {
+      await cancelBooking(bookingId, departmentCode);
+      alert('ยกเลิกการจองสำเร็จ!');
+      handleCloseCancelModal();
+    } catch (error) {
+      alert(`เกิดข้อผิดพลาด: ${error instanceof Error ? error.message : 'ไม่สามารถยกเลิกการจองได้'}`);
     }
   };
 
@@ -93,6 +112,7 @@ export default function AdminBookings() {
         <div className="space-y-4">
           {filteredBookings.map((booking) => {
             const room = getRoomById(booking.room_id);
+            const departmentName = getDepartmentNameByCode(booking.department_code); // Get department name
             
             return (
               <div key={booking.id} className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
@@ -118,9 +138,10 @@ export default function AdminBookings() {
                     
                     {booking.status === 'confirmed' && (
                       <button
-                        onClick={() => handleCancelBooking(booking.id, booking.title)}
+                        onClick={() => handleOpenCancelModal(booking.id, booking.title)}
                         className="text-red-500 hover:text-red-700 hover:bg-red-50 p-2 rounded-full transition-colors"
                         title="ยกเลิกการจอง"
+                        disabled={cancelling}
                       >
                         <X className="w-4 h-4" />
                       </button>
@@ -143,6 +164,10 @@ export default function AdminBookings() {
                       <div className="flex items-center text-gray-600 text-sm">
                         <User className="w-4 h-4 mr-2" />
                         <span>{booking.user_name}</span>
+                      </div>
+                      <div className="flex items-center text-gray-600 text-sm">
+                        <Tag className="w-4 h-4 mr-2" />
+                        <span>{departmentName}</span> {/* Display department name */}
                       </div>
                     </div>
                     
@@ -172,6 +197,16 @@ export default function AdminBookings() {
             );
           })}
         </div>
+      )}
+
+      {showCancelModal && selectedBookingForCancel && (
+        <CancelBookingModal
+          bookingId={selectedBookingForCancel.id}
+          bookingTitle={selectedBookingForCancel.title}
+          onConfirm={handleConfirmCancel}
+          onClose={handleCloseCancelModal}
+          submitting={cancelling}
+        />
       )}
     </div>
   );

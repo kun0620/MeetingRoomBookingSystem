@@ -25,3 +25,8 @@ export const isPastDate = (dateString: string): boolean => {
   const today = formatDate(new Date());
   return dateString < today;
 };
+
+export const formatTime = (timeString: string): string => {
+  const [hours, minutes] = timeString.split(':');
+  return `${hours}:${minutes}`;
+};

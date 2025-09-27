@@ -1,11 +1,11 @@
 import React, { useState, ReactNode } from 'react';
 import { CalendarDays, Building, LineChart, MessageSquare, Settings, LogOut, Home, Menu, X, Users } from 'lucide-react';
-import { User } from '../types';
+import { User, ViewMode } from '../types'; // Import ViewMode
 
 interface MainLayoutProps {
   children: ReactNode;
-  viewMode: 'booking' | 'management' | 'admin';
-  setViewMode: (mode: 'booking' | 'management' | 'admin') => void;
+  viewMode: ViewMode; // Use the updated ViewMode type
+  setViewMode: (mode: ViewMode) => void; // Use the updated ViewMode type
   user: User | null;
   isAdmin: boolean;
   onLogout: () => void;
@@ -25,7 +25,7 @@ export default function MainLayout({
 
   const menuItems = [
     { id: 'booking', label: 'จองห้อง', icon: CalendarDays },
-    { id: 'management', label: 'จัดการการจอง', icon: LineChart },
+    { id: 'status', label: 'สถานะการจอง', icon: LineChart }, // Changed label and id
   ];
 
   return (
@@ -70,7 +70,7 @@ export default function MainLayout({
                       <li key={item.id}>
                         <button
                           onClick={() => {
-                            setViewMode(item.id as 'booking' | 'management');
+                            setViewMode(item.id as ViewMode); // Cast to ViewMode
                             setIsSidebarOpen(false);
                           }}
                           className={`flex items-center w-full px-4 py-2 rounded-lg font-medium transition-colors group
