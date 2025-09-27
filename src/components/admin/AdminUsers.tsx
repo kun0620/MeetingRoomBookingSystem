@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useUsers } from '../../hooks/useUsers';
-import { Users, Plus, CreditCard as Edit, Trash2, Mail, Phone, Loader2, Shield, User as UserIcon, ChevronDown, ChevronUp } from 'lucide-react';
+import { Users, Plus, CreditCard as Edit, Trash2, Mail, Phone, Loader2, Shield, User as UserIcon, ChevronDown } from 'lucide-react';
 import { User } from '../../types';
 
 export default function AdminUsers() {
@@ -160,8 +160,7 @@ export default function AdminUsers() {
                   <details className="mt-2">
                     <summary className="flex items-center justify-between text-sm font-medium text-gray-700 cursor-pointer">
                       <span>รายละเอียดผู้ใช้</span>
-                      <ChevronDown className="w-4 h-4 details-open:hidden" />
-                      <ChevronUp className="w-4 h-4 details-closed:hidden" />
+                      <ChevronDown className="w-4 h-4 transition-transform duration-200 group-open:rotate-180" />
                     </summary>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-3">
                       <div className="space-y-2">

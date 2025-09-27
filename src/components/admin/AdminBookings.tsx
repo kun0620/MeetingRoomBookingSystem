@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useBookings } from '../../hooks/useBookings';
 import { useRooms } from '../../hooks/useRooms';
 import { useDepartmentCodes } from '../../hooks/useDepartmentCodes'; // Import the new hook
-import { Calendar, Clock, User, Phone, Mail, X, Search, Filter, Loader2, ChevronDown, ChevronUp, Tag } from 'lucide-react';
+import { Calendar, Clock, User, Phone, Mail, X, Search, Filter, Loader2, ChevronDown, Tag } from 'lucide-react';
 import { formatDateThai } from '../../utils/dateUtils';
 import CancelBookingModal from '../CancelBookingModal'; // Import the CancelBookingModal
 
@@ -152,8 +152,7 @@ export default function AdminBookings() {
                 <details className="mt-3 pt-3 border-t border-gray-100">
                   <summary className="flex items-center justify-between text-sm font-medium text-gray-700 cursor-pointer">
                     <span>รายละเอียดเพิ่มเติม</span>
-                    <ChevronDown className="w-4 h-4 details-open:hidden" />
-                    <ChevronUp className="w-4 h-4 details-closed:hidden" />
+                    <ChevronDown className="w-4 h-4 transition-transform duration-200 group-open:rotate-180" />
                   </summary>
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-3">
                     <div className="space-y-2">
