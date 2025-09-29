@@ -29,3 +29,26 @@ export interface TimeSlot {
   available: boolean;
   booking?: Booking;
 }
+
+export interface DepartmentCode {
+  id: string;
+  code: string;
+  department_name: string;
+  role: string;
+  created_at: string;
+}
+
+export interface BookingStats {
+  totalBookings: number;
+  confirmedBookings: number;
+  cancelledBookings: number;
+  roomUsage: { [roomId: string]: number };
+  departmentUsage: { [departmentCode: string]: number };
+  monthlyBookings: { [month: string]: number };
+}
+
+export interface ExportData {
+  bookings: Booking[];
+  rooms: Room[];
+  departmentCodes: DepartmentCode[];
+}
