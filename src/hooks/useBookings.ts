@@ -18,8 +18,7 @@ export function useBookings() {
       const { data, error } = await supabase
         .from('bookings')
         .select('*')
-        .order('date', { ascending: true })
-        .order('start_time', { ascending: true });
+        .order('created_at', { ascending: false }); // เปลี่ยนเป็นเรียงตาม created_at จากใหม่ไปเก่า
 
       if (error) throw error;
 
