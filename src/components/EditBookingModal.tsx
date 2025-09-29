@@ -1,58 +1,86 @@
 import React, { useState, useEffect } from 'react';
 import { Dialog } from '@headlessui/react';
-import { Booking, Room, DepartmentCode } from '../types'; // Import DepartmentCode
-import { formatDateThai } from '../utils/dateUtils'; // Keep if needed elsewhere, but not directly used for date input formatting here
+import { Booking, Room, DepartmentCode } from '../types';
 
 interface EditBookingModalProps {
   isOpen: boolean;
   onClose: () => void;
   booking: Booking | null;
   rooms: Room[];
-  departmentCodes: DepartmentCode[]; // Add departmentCodes prop
-  onSave: (updatedBooking: Booking) => void; // Renamed from onUpdate to onSave for consistency
+  departmentCodes: DepartmentCode[];
+  onSave: (updatedBooking: Booking) => void;
 }
 
 export default function EditBookingModal({ isOpen, onClose, booking, rooms, departmentCodes, onSave }: EditBookingModalProps) {
   const [title, setTitle] = useState('');
-  const [roomId, setRoomId] = useState('');
-  const [date, setDate] = useState(''); // YYYY-MM-DD
-  const [startTime, setStartTime] = useState(''); // HH:MM
-  const [endTime, setEndTime] = useState(''); // HH:MM
+  const [userPhone, setUserPhone] = useState(''); // เพิ่ม state สำหรับเบอร์โทร
+  const [userEmail, setUserEmail] = useState(''); // เพิ่ม state สำหรับอีเมล
   const [description, setDescription] = useState('');
-  const [departmentCodeId, setDepartmentCodeId] = useState(''); // New state for department code
+
+  // ฟิลด์เหล่านี้จะถูกปิดใช้งาน ไม่ให้แก้ไข
+  const [roomId, setRoomId] = useState('');
+  const [date, setDate] = useState('');
+  const [startTime, setStartTime] = useState('');
+  const [endTime, setEndTime] = useState('');
+  const [departmentCode, setDepartmentCode] = useState('');
 
   useEffect(() => {
-    if (booking) {
-      setTitle(booking.title);
-      setRoomId(booking.room_id);
-      setDescription(booking.description || '');
-      setDepartmentCodeId(booking.department_code_id);
+    if (!booking) {
+      // Reset states if booking is null to prevent displaying stale data
+      setTitle('');
+      setUserPhone('');
+      setUserEmail('');
+      setDescription('');
+      setRoomId('');
+      setDate('');
+      setStartTime('');
+      setEndTime('');
+      setDepartmentCode('');
+      return;
+    }
 
-      // Extract date and time from ISO strings
-      const start = new Date(booking.start_time);
-      const end = new Date(booking.end_time);
+    setTitle(booking.title);
+    setUserPhone(booking.user_phone || ''); // ดึงค่า user_phone
+    setUserEmail(booking.user_email || ''); // ดึงค่า user_email
+    setDescription(booking.description || '');
 
-      setDate(start.toISOString().substring(0, 10)); // YYYY-MM-DD
-      setStartTime(start.toISOString().substring(11, 16)); // HH:MM
-      setEndTime(end.toISOString().substring(11, 16)); // HH:MM
+    // ตั้งค่าฟิลด์ที่ถูกปิดใช้งาน (disabled)
+    setRoomId(booking.room_id);
+    setDepartmentCode(booking.department_code);
+
+    const fullStartTimeString = `${booking.date}T${booking.start_time}`;
+    const fullEndTimeString = `${booking.date}T${booking.end_time}`;
+
+    const start = new Date(fullStartTimeString);
+    const end = new Date(fullEndTimeString);
+
+    if (!isNaN(start.getTime()) && !isNaN(end.getTime())) {
+      setDate(booking.date);
+      setStartTime(booking.start_time.substring(0, 5));
+      setEndTime(booking.end_time.substring(0, 5));
+    } else {
+      console.error('Invalid date value received for booking:', booking, 'Full start time string:', fullStartTimeString, 'Full end time string:', fullEndTimeString);
+      setDate('');
+      setStartTime('');
+      setEndTime('');
     }
   }, [booking]);
 
   const handleSubmit = () => {
     if (!booking) return;
 
-    // Combine date and time inputs into ISO strings
-    const updatedStartTime = new Date(`${date}T${startTime}:00`).toISOString();
-    const updatedEndTime = new Date(`${date}T${endTime}:00`).toISOString();
-
     const updatedBooking: Booking = {
       ...booking,
       title,
-      room_id: roomId,
-      start_time: updatedStartTime,
-      end_time: updatedEndTime,
+      user_phone: userPhone, // อัปเดต user_phone
+      user_email: userEmail, // อัปเดต user_email
       description: description,
-      department_code_id: departmentCodeId, // Include updated department code
+      // ฟิลด์อื่นๆ ที่ถูกปิดใช้งาน จะใช้ค่าเดิมจาก booking
+      room_id: roomId,
+      date: date,
+      start_time: startTime + ':00',
+      end_time: endTime + ':00',
+      department_code: departmentCode,
     };
 
     onSave(updatedBooking);
@@ -82,15 +110,16 @@ export default function EditBookingModal({ isOpen, onClose, booking, rooms, depa
             />
           </div>
 
+          {/* ฟิลด์ ห้องประชุม - ปิดใช้งาน */}
           <div className="mt-4">
             <label htmlFor="roomId" className="block text-sm font-medium text-gray-700">
               ห้องประชุม
             </label>
             <select
               id="roomId"
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
+              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm bg-gray-100 cursor-not-allowed"
               value={roomId}
-              onChange={(e) => setRoomId(e.target.value)}
+              disabled // ปิดใช้งาน
             >
               {rooms.map((room) => (
                 <option key={room.id} value={room.id}>{room.name}</option>
@@ -98,22 +127,24 @@ export default function EditBookingModal({ isOpen, onClose, booking, rooms, depa
             </select>
           </div>
 
+          {/* ฟิลด์ แผนก - ปิดใช้งาน */}
           <div className="mt-4">
-            <label htmlFor="departmentCodeId" className="block text-sm font-medium text-gray-700">
+            <label htmlFor="departmentCode" className="block text-sm font-medium text-gray-700">
               แผนก
             </label>
             <select
-              id="departmentCodeId"
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
-              value={departmentCodeId}
-              onChange={(e) => setDepartmentCodeId(e.target.value)}
+              id="departmentCode"
+              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm bg-gray-100 cursor-not-allowed"
+              value={departmentCode}
+              disabled // ปิดใช้งาน
             >
               {departmentCodes.map((dept) => (
-                <option key={dept.id} value={dept.id}>{dept.name}</option>
+                <option key={dept.id} value={dept.code}>{dept.department_name}</option>
               ))}
             </select>
           </div>
 
+          {/* ฟิลด์ วันที่ - ปิดใช้งาน */}
           <div className="mt-4">
             <label htmlFor="date" className="block text-sm font-medium text-gray-700">
               วันที่
@@ -121,12 +152,13 @@ export default function EditBookingModal({ isOpen, onClose, booking, rooms, depa
             <input
               type="date"
               id="date"
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
+              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm bg-gray-100 cursor-not-allowed"
               value={date}
-              onChange={(e) => setDate(e.target.value)}
+              disabled // ปิดใช้งาน
             />
           </div>
 
+          {/* ฟิลด์ เวลาเริ่มต้น/สิ้นสุด - ปิดใช้งาน */}
           <div className="mt-4 grid grid-cols-2 gap-4">
             <div>
               <label htmlFor="startTime" className="block text-sm font-medium text-gray-700">
@@ -135,9 +167,9 @@ export default function EditBookingModal({ isOpen, onClose, booking, rooms, depa
               <input
                 type="time"
                 id="startTime"
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
+                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm bg-gray-100 cursor-not-allowed"
                 value={startTime}
-                onChange={(e) => setStartTime(e.target.value)}
+                disabled // ปิดใช้งาน
               />
             </div>
             <div>
@@ -147,13 +179,42 @@ export default function EditBookingModal({ isOpen, onClose, booking, rooms, depa
               <input
                 type="time"
                 id="endTime"
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
+                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm bg-gray-100 cursor-not-allowed"
                 value={endTime}
-                onChange={(e) => setEndTime(e.target.value)}
-              />
+                disabled // ปิดใช้งาน
+            />
             </div>
           </div>
 
+          {/* ฟิลด์ เบอร์โทร - เปิดให้แก้ไข */}
+          <div className="mt-4">
+            <label htmlFor="userPhone" className="block text-sm font-medium text-gray-700">
+              เบอร์โทร
+            </label>
+            <input
+              type="text"
+              id="userPhone"
+              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
+              value={userPhone}
+              onChange={(e) => setUserPhone(e.target.value)}
+            />
+          </div>
+
+          {/* ฟิลด์ อีเมล - เปิดให้แก้ไข */}
+          <div className="mt-4">
+            <label htmlFor="userEmail" className="block text-sm font-medium text-gray-700">
+              อีเมล
+            </label>
+            <input
+              type="email"
+              id="userEmail"
+              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
+              value={userEmail}
+              onChange={(e) => setUserEmail(e.target.value)}
+            />
+          </div>
+
+          {/* ฟิลด์ รายละเอียดเพิ่มเติม - เปิดให้แก้ไข */}
           <div className="mt-4">
             <label htmlFor="description" className="block text-sm font-medium text-gray-700">
               รายละเอียดเพิ่มเติม

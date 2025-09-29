@@ -16,9 +16,11 @@ export default function AdminRooms() {
     capacity: 0,
     description: '',
     amenities: [] as string[],
-    image_url: '' // Changed from color to image_url
+    color: 'from-blue-500 to-blue-600', // Keep color for now, as it's in the type and will be passed through
+    image_url: '' // Add image_url
   });
 
+  // Removed colorOptions as it's no longer needed for selection
   const amenityOptions = [
     'โปรเจคเตอร์',
     'จอ LED TV',
@@ -38,7 +40,8 @@ export default function AdminRooms() {
       capacity: 0,
       description: '',
       amenities: [],
-      image_url: '' // Reset image_url
+      color: 'from-blue-500 to-blue-600', // Reset to a default color
+      image_url: ''
     });
     setEditingRoom(null);
     setShowForm(false);
@@ -57,6 +60,7 @@ export default function AdminRooms() {
       capacity: room.capacity,
       description: room.description,
       amenities: room.amenities,
+      color: room.color, // Populate existing color, but it won't be editable
       image_url: room.image_url || '' // Populate image_url
     });
     setEditingRoom(room);
@@ -69,7 +73,7 @@ export default function AdminRooms() {
 
     try {
       if (editingRoom) {
-        // For updating, send all formData including id and existing image_url
+        // For updating, send all formData including id and existing color
         await updateRoom(editingRoom.id, formData);
         alert('อัปเดตห้องสำเร็จ!');
       } else {

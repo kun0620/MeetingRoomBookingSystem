@@ -3,7 +3,7 @@ export type Room = {
   name: string;
   capacity: number;
   description: string;
-  image_url: string; // Changed from color to image_url
+  image_url: string;
   created_at: string;
 };
 
@@ -23,6 +23,9 @@ export type Booking = {
   department_code: string; // For cancellation verification
   contact_person: string;
   contact_email: string;
+  user_name: string; // เพิ่ม user_name
+  user_email: string; // เพิ่ม user_email
+  user_phone: string; // เพิ่ม user_phone
   status: 'pending' | 'confirmed' | 'cancelled';
   created_at: string;
 };

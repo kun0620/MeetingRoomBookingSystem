@@ -23,7 +23,11 @@ export function useBookings() {
 
       if (error) throw error;
 
-      setBookings(data || []);
+      // Log the raw data fetched from Supabase
+      console.log('useBookings: Raw data from Supabase:', data);
+
+      // Ensure data matches the Booking type from src/types.ts
+      setBookings(data as Booking[] || []);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'เกิดข้อผิดพลาดในการโหลดข้อมูลการจอง');
     } finally {
@@ -31,8 +35,11 @@ export function useBookings() {
     }
   };
 
-  const createBooking = async (bookingData: Omit<Booking, 'id' | 'created_at'>) => {
+  const createBooking = async (bookingData: Omit<Booking, 'id' | 'created_at' | 'department_name' | 'contact_person' | 'contact_email'>) => {
     try {
+      // When creating, ensure the data sent matches the DB schema.
+      // The Omit type above ensures we don't send id, created_at, department_name, contact_person, contact_email
+      // as they are either auto-generated or derived.
       const { data, error } = await supabase
         .from('bookings')
         .insert([bookingData])
@@ -41,20 +48,20 @@ export function useBookings() {
 
       if (error) throw error;
 
-      setBookings(prev => [...prev, data]);
-      return data;
+      setBookings(prev => [...prev, data as Booking]);
+      return data as Booking;
     } catch (err) {
       throw new Error(err instanceof Error ? err.message : 'เกิดข้อผิดพลาดในการจองห้อง');
     }
   };
 
-  const cancelBooking = async (bookingId: string, departmentCode: string) => { // Added departmentCode parameter
+  const cancelBooking = async (bookingId: string, departmentCode: string) => { // departmentCode parameter is correct
     try {
       setCancelling(true); // Set cancelling state to true
       // First, fetch the booking to verify the department code
       const { data: booking, error: fetchError } = await supabase
         .from('bookings')
-        .select('department_code')
+        .select('department_code') // Selects department_code
         .eq('id', bookingId)
         .single();
 
@@ -100,6 +107,7 @@ export function useBookings() {
 
   const updateBooking = async (bookingId: string, updatedBookingData: Partial<Booking>) => {
     try {
+      // Ensure updatedBookingData matches the DB schema
       const { data, error } = await supabase
         .from('bookings')
         .update(updatedBookingData)
@@ -118,7 +126,7 @@ export function useBookings() {
         )
       );
 
-      return data;
+      return data as Booking;
     } catch (err) {
       console.error('Error in updateBooking hook:', err);
       throw new Error(err instanceof Error ? err.message : 'เกิดข้อผิดพลาดในการแก้ไขข้อมูลการจอง');

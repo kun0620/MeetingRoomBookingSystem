@@ -1,3 +1,22 @@
+export interface Booking {
+  id: string;
+  room_id: string;
+  user_name: string;
+  user_email: string;
+  user_phone: string;
+  title: string;
+  description: string | null;
+  start_time: string; // HH:MM:SS or HH:MM from DB
+  end_time: string;   // HH:MM:SS or HH:MM from DB
+  date: string;       // YYYY-MM-DD from DB
+  status: 'pending' | 'confirmed' | 'cancelled' | 'completed';
+  department_code: string; // Matches DB column name
+  department_name: string | null;
+  contact_person: string | null; // Matches DB column name
+  contact_email: string | null;  // Matches DB column name
+  created_at: string;
+}
+
 export interface Room {
   id: string;
   name: string;
@@ -8,24 +27,10 @@ export interface Room {
   created_at: string;
 }
 
-export interface Booking {
+export interface DepartmentCode {
   id: string;
-  room_id: string;
-  user_name: string;
-  user_email: string;
-  user_phone: string;
-  title: string;
-  description: string | null;
-  start_time: string;
-  end_time: string;
-  date: string;
-  status: 'pending' | 'confirmed' | 'cancelled';
-  department_code: string; // Added department_code
+  code: string;
+  name: string; // Maps to department_name in DB
+  role: string;
   created_at: string;
-}
-
-export interface TimeSlot {
-  time: string;
-  available: boolean;
-  booking?: Booking;
 }

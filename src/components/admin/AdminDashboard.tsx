@@ -8,13 +8,17 @@ import {
   LogOut,
   Home,
   Menu, // Import Menu icon for mobile toggle
-  X // Import X icon for closing sidebar on mobile
+  X, // Import X icon for closing sidebar on mobile
+  Search // Import Search icon
 } from 'lucide-react';
 import { User } from '../../types';
 import AdminRooms from './AdminRooms';
 import AdminBookings from './AdminBookings';
 import AdminUsers from './AdminUsers';
 import AdminStats from './AdminStats';
+import AdminDepartments from './AdminDepartments';
+import AdminReports from './AdminReports';
+import AdminAdvancedSearch from './AdminAdvancedSearch';
 
 interface AdminDashboardProps {
   user: User;
@@ -22,7 +26,7 @@ interface AdminDashboardProps {
   onBackToMain: () => void;
 }
 
-type AdminView = 'stats' | 'rooms' | 'bookings' | 'users' | 'settings';
+type AdminView = 'stats' | 'rooms' | 'bookings' | 'users' | 'departments' | 'reports' | 'search' | 'settings';
 
 export default function AdminDashboard({ user, onLogout, onBackToMain }: AdminDashboardProps) {
   const [currentView, setCurrentView] = useState<AdminView>('stats');
@@ -33,6 +37,9 @@ export default function AdminDashboard({ user, onLogout, onBackToMain }: AdminDa
     { id: 'rooms' as AdminView, label: 'จัดการห้อง', icon: Building },
     { id: 'bookings' as AdminView, label: 'จัดการการจอง', icon: Calendar },
     { id: 'users' as AdminView, label: 'จัดการสมาชิก', icon: Users },
+    { id: 'departments' as AdminView, label: 'จัดการแผนก', icon: Building },
+    { id: 'reports' as AdminView, label: 'รายงานและสถิติ', icon: BarChart3 },
+    { id: 'search' as AdminView, label: 'ค้นหาขั้นสูง', icon: Search },
     { id: 'settings' as AdminView, label: 'ตั้งค่า', icon: Settings },
   ];
 
@@ -46,6 +53,12 @@ export default function AdminDashboard({ user, onLogout, onBackToMain }: AdminDa
         return <AdminBookings />;
       case 'users':
         return <AdminUsers />;
+      case 'departments':
+        return <AdminDepartments />;
+      case 'reports':
+        return <AdminReports />;
+      case 'search':
+        return <AdminAdvancedSearch />;
       case 'settings':
         return (
           <div className="bg-white rounded-xl shadow-lg p-6">
