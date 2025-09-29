@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useDepartmentCodes } from '../../hooks/useDepartmentCodes';
-import { Building2, Plus, Edit, Trash2, Loader2, Shield, Users, Tag } from 'lucide-react';
+import { Building2, Plus, CreditCard as Edit, Trash2, Loader2, Shield, Users, Tag } from 'lucide-react';
 import { DepartmentCode } from '../../types';
 
 export default function AdminDepartments() {
