@@ -51,6 +51,24 @@ export default function Calendar({ selectedDate, onDateSelect, bookings }: Calen
       });
     }
 
+    // Add empty cells for days after the last day of the month to complete the last week
+    // Calculate how many cells are already filled
+    const totalCellsFilled = days.length;
+    // We need to fill up to a multiple of 7 (e.g., 35 or 42 cells)
+    const remainingCells = (7 - (totalCellsFilled % 7)) % 7;
+
+    for (let i = 0; i < remainingCells; i++) {
+      const nextDate = new Date(year, month + 1, i + 1); // Days from the next month
+      const dateString = formatDate(nextDate);
+      days.push({
+        date: dateString,
+        isToday: isToday(dateString),
+        isSelected: dateString === selectedDate,
+        hasBookings: false, // Bookings for next month days are not fetched here
+        bookingsCount: 0
+      });
+    }
+
     return days;
   };
 
@@ -63,13 +81,16 @@ export default function Calendar({ selectedDate, onDateSelect, bookings }: Calen
 
   const navigateMonth = (direction: 'prev' | 'next') => {
     setCurrentMonth(prev => {
-      const newMonth = new Date(prev);
+      const year = prev.getFullYear();
+      const month = prev.getMonth();
+      let newMonthDate;
+
       if (direction === 'prev') {
-        newMonth.setMonth(prev.getMonth() - 1);
+        newMonthDate = new Date(year, month - 1, 1); 
       } else {
-        newMonth.setMonth(prev.getMonth() + 1);
+        newMonthDate = new Date(year, month + 1, 1);
       }
-      return newMonth;
+      return newMonthDate;
     });
   };
 
@@ -106,7 +127,8 @@ export default function Calendar({ selectedDate, onDateSelect, bookings }: Calen
       <div className="grid grid-cols-7 gap-2">
         {days.map((day, index) => {
           const isPast = isPastDate(day.date);
-          const isCurrentMonth = new Date(day.date).getMonth() === currentMonth.getMonth();
+          const dayDate = new Date(day.date);
+          const isCurrentMonth = dayDate.getMonth() === currentMonth.getMonth();
           
           return (
             <button
@@ -121,12 +143,12 @@ export default function Calendar({ selectedDate, onDateSelect, bookings }: Calen
                     ? isPast 
                       ? 'text-gray-300 cursor-not-allowed' 
                       : 'hover:bg-blue-50 text-gray-700'
-                    : 'text-gray-300'
+                    : 'text-gray-300' // This applies to days not in current month
                 }
                 ${day.isToday && !day.isSelected ? 'ring-2 ring-blue-200' : ''}
               `}
             >
-              {new Date(day.date).getDate()}
+              {isCurrentMonth ? dayDate.getDate() : ''} {/* Render date only if it's in the current month */}
               {day.hasBookings && isCurrentMonth && (
                 <div className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
                   {day.bookingsCount}
