@@ -1,32 +1,72 @@
-import React from 'react';
-import { TimeSlot } from '../types';
+import React, { useMemo } from 'react';
+import { TimeSlot, Booking } from '../types';
 import { Clock } from 'lucide-react';
+import { timeSlots as baseTimeSlots } from '../utils/timeSlots'; // Import base time slots
+import { isPastDate, isPastTime, formatDate } from '../utils/dateUtils'; // Import utility functions
 
 interface TimeSlotsProps {
-  timeSlots: TimeSlot[];
+  selectedDate: string;
+  roomBookings: Booking[];
   selectedStartTime: string;
   selectedEndTime: string;
-  onTimeSelect: (time: string, type: 'start' | 'end') => void;
+  onTimeSlotChange: (time: string, type: 'start' | 'end') => void; // Renamed prop
+  onSelectTimeSlot: (startTime: string, endTime: string) => void; // New prop for final selection
 }
 
 export default function TimeSlots({
-  timeSlots,
+  selectedDate,
+  roomBookings,
   selectedStartTime,
   selectedEndTime,
-  onTimeSelect,
+  onTimeSlotChange, // Renamed
+  onSelectTimeSlot, // New
 }: TimeSlotsProps) {
+
+  // Generate available time slots based on selectedDate and roomBookings
+  const displayTimeSlots = useMemo(() => {
+    const now = new Date();
+    const currentSelectedDate = new Date(selectedDate);
+
+    return baseTimeSlots.map(slot => {
+      const isBooked = roomBookings.some(booking =>
+        (slot.time >= booking.start_time && slot.time < booking.end_time) ||
+        (slot.end > booking.start_time && slot.time < booking.end_time) // Covers overlaps
+      );
+
+      const isPast = isPastDate(selectedDate) || (selectedDate === formatDate(now) && isPastTime(slot.time, now));
+
+      return {
+        time: slot.time,
+        end: slot.end,
+        available: !isBooked && !isPast,
+      };
+    });
+  }, [selectedDate, roomBookings]);
+
   const handleStartTimeClick = (time: string) => {
-    onTimeSelect(time, 'start');
+    if (selectedStartTime === time) {
+      onTimeSlotChange('', 'start');
+      onTimeSlotChange('', 'end'); // Also clear end time if start is deselected
+    } else {
+      onTimeSlotChange(time, 'start');
+      // If new start time is later than current end time, clear end time
+      if (selectedEndTime && time >= selectedEndTime) {
+        onTimeSlotChange('', 'end');
+      }
+    }
   };
 
   const handleEndTimeClick = (time: string) => {
-    onTimeSelect(time, 'end');
+    onTimeSlotChange(time, 'end');
+    // Once both start and end are selected, trigger the final selection callback
+    if (selectedStartTime && time > selectedStartTime) {
+      onSelectTimeSlot(selectedStartTime, time);
+    }
   };
 
   const isTimeSelected = (time: string) => {
     if (!selectedStartTime) return false;
     if (!selectedEndTime) return time === selectedStartTime;
-    // แก้ไขตรงนี้: เปลี่ยนจาก time < selectedEndTime เป็น time <= selectedEndTime
     return time >= selectedStartTime && time <= selectedEndTime;
   };
 
@@ -53,7 +93,7 @@ export default function TimeSlots({
       </div>
 
       <div className="grid grid-cols-2 xs:grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-2">
-        {timeSlots.map((slot, index) => {
+        {displayTimeSlots.map((slot, index) => {
           const isSelected = isTimeSelected(slot.time);
           const isAvailable = slot.available;
           const canBeEndTime = isSelectableAsEndTime(slot.time);

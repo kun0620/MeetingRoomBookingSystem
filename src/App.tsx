@@ -64,6 +64,16 @@ function App() {
     return success;
   };
 
+  // New handler for proceeding to booking, with login enforcement
+  const handleProceedToBooking = () => {
+    if (!user) {
+      alert('กรุณาเข้าสู่ระบบก่อนทำการจองห้องประชุม');
+      setViewMode('admin'); // Redirect to admin login view (which also serves as a general login for department codes)
+    } else {
+      setShowBookingModal(true);
+    }
+  };
+
   // Filter bookings for the status page based on selectedDateForStatus
   const filteredBookingsForStatus = bookings.filter(booking => 
     booking.date === selectedDateForStatus
@@ -167,7 +177,7 @@ function App() {
           {selectedRoom && (
             <div className="fixed bottom-0 left-0 right-0 bg-transparent p-4 shadow-lg z-30 lg:ml-[290px] flex justify-center">
               <button
-                onClick={() => setShowBookingModal(true)}
+                onClick={handleProceedToBooking} // Use the new handler
                 className="px-8 py-3 bg-blue-500 border border-blue-500 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium text-lg"
               >
                 ดำเนินการจองห้อง {selectedRoom.name}
@@ -182,6 +192,7 @@ function App() {
               onClose={() => setShowBookingModal(false)}
               onSubmitBooking={handleBookingSubmit}
               submitting={submitting}
+              user={user} // Pass the user object
             />
           )}
         </>

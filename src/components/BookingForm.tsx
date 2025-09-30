@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
-import { Room, Booking } from '../types';
-import { User, Mail, Phone, FileText, Calendar, Loader2, Tag } from 'lucide-react'; // Added Tag icon
+import React, { useState, useEffect } from 'react';
+import { Room, Booking, User } from '../types';
+import { User as UserIcon, Mail, Phone, FileText, Calendar, Loader2, Tag } from 'lucide-react';
 import { formatDateThai } from '../utils/dateUtils';
 
 interface BookingFormProps {
@@ -11,6 +11,7 @@ interface BookingFormProps {
   onSubmit: (booking: Omit<Booking, 'id' | 'created_at'>) => void;
   onCancel: () => void;
   submitting?: boolean;
+  currentUser?: User | null; // New prop
 }
 
 export default function BookingForm({
@@ -20,16 +21,26 @@ export default function BookingForm({
   selectedEndTime,
   onSubmit,
   onCancel,
-  submitting = false
+  submitting = false,
+  currentUser // Destructure currentUser
 }: BookingFormProps) {
   const [formData, setFormData] = useState({
-    user_name: '',
-    user_email: '',
+    user_name: '', // Always start empty, user must fill
+    user_email: '', // Always start empty, user must fill
     user_phone: '',
     title: '',
     description: '',
-    department_code: '' // Added department_code to form data
+    department_code: currentUser?.department_code || '' // Pre-fill department_code if available
   });
+
+  // Use useEffect to update department_code if currentUser changes (e.g., after login)
+  // user_name and user_email are intentionally not updated here to keep them empty initially
+  useEffect(() => {
+    setFormData(prev => ({
+      ...prev,
+      department_code: currentUser?.department_code || prev.department_code,
+    }));
+  }, [currentUser]);
 
   const [errors, setErrors] = useState<Record<string, string>>({});
 
@@ -54,7 +65,8 @@ export default function BookingForm({
       newErrors.title = 'กรุณาระบุหัวข้อการประชุม';
     }
 
-    if (!formData.department_code.trim()) { // Validate department_code
+    const isDepartmentCodeReadOnly = !!currentUser?.department_code;
+    if (!isDepartmentCodeReadOnly && !formData.department_code.trim()) {
       newErrors.department_code = 'กรุณาระบุรหัสแผนก';
     }
 
@@ -88,6 +100,8 @@ export default function BookingForm({
     }
   };
 
+  const isDepartmentCodeReadOnly = !!currentUser?.department_code;
+
   return (
     <div className="bg-white rounded-xl shadow-lg p-6">
       <div className="mb-6">
@@ -114,7 +128,7 @@ export default function BookingForm({
       <form onSubmit={handleSubmit} className="space-y-6">
         <div>
           <label className="flex items-center text-sm font-medium text-gray-700 mb-2">
-            <User className="w-4 h-4 mr-2" />
+            <UserIcon className="w-4 h-4 mr-2" />
             ชื่อผู้จอง *
           </label>
           <input
@@ -190,7 +204,7 @@ export default function BookingForm({
 
         <div>
           <label className="flex items-center text-sm font-medium text-gray-700 mb-2">
-            <Tag className="w-4 h-4 mr-2" /> {/* New icon for department code */}
+            <Tag className="w-4 h-4 mr-2" />
             รหัสแผนก *
           </label>
           <input
@@ -201,6 +215,7 @@ export default function BookingForm({
               errors.department_code ? 'border-red-500' : 'border-gray-300'
             }`}
             placeholder="เช่น IT, HR, MKG"
+            readOnly={isDepartmentCodeReadOnly}
           />
           {errors.department_code && (
             <p className="text-red-500 text-sm mt-1">{errors.department_code}</p>

@@ -1,18 +1,20 @@
 import React, { useState, useEffect } from 'react';
-import { Room, Booking, TimeSlot } from '../types';
-import { timeSlots } from '../utils/timeSlots';
+import { Room, Booking, TimeSlot, User } from '../types';
+import { timeSlots as baseTimeSlots } from '../utils/timeSlots'; // Import base time slots
 import { formatDate, isPastDate } from '../utils/dateUtils';
 import Calendar from './Calendar';
 import TimeSlots from './TimeSlots';
 import BookingForm from './BookingForm';
-import { X, Loader2 } from 'lucide-react';
+import BookingReview from './BookingReview'; // Import the new component
+import { X, Calendar as CalendarIcon, Clock, Info } from 'lucide-react';
 
 interface BookingModalProps {
   room: Room;
   bookings: Booking[];
   onClose: () => void;
   onSubmitBooking: (booking: Omit<Booking, 'id' | 'created_at'>) => Promise<void>;
-  submitting: boolean;
+  submitting?: boolean;
+  user: User | null; // New prop for current user
 }
 
 export default function BookingModal({
@@ -20,137 +22,136 @@ export default function BookingModal({
   bookings,
   onClose,
   onSubmitBooking,
-  submitting
+  submitting = false,
+  user // Destructure user prop
 }: BookingModalProps) {
   const [selectedDate, setSelectedDate] = useState<string>(formatDate(new Date()));
   const [selectedStartTime, setSelectedStartTime] = useState<string>('');
   const [selectedEndTime, setSelectedEndTime] = useState<string>('');
-  const [showBookingForm, setShowBookingForm] = useState(false);
+  const [showReview, setShowReview] = useState(false); // New state for review step
+  const [showForm, setShowForm] = useState(false);
 
-  // Reset selections when room or date changes
-  useEffect(() => {
-    setSelectedStartTime('');
-    setSelectedEndTime('');
-    setShowBookingForm(false);
-  }, [room.id, selectedDate]);
+  // Filter bookings for the selected room and date
+  const roomBookingsForSelectedDate = bookings.filter(
+    (b) => b.room_id === room.id && b.date === selectedDate && b.status !== 'cancelled'
+  );
 
-  const getAvailableTimeSlots = (): TimeSlot[] => {
-    if (!room || !selectedDate) {
-      return timeSlots.map(time => ({ time, available: true }));
-    }
-
-    const roomBookings = bookings.filter(
-      booking => 
-        booking.room_id === room.id && 
-        booking.date === selectedDate &&
-        booking.status === 'confirmed'
-    );
-
-    return timeSlots.map(time => {
-      const isBooked = roomBookings.some(booking => 
-        time >= booking.start_time && time < booking.end_time
-      );
-      
-      const isPast = isPastDate(selectedDate) || 
-        (selectedDate === formatDate(new Date()) && time <= new Date().toTimeString().slice(0, 5));
-      
-      return {
-        time,
-        available: !isBooked && !isPast,
-        booking: roomBookings.find(booking => 
-          time >= booking.start_time && time < booking.end_time
-        )
-      };
-    });
-  };
-
-  const handleTimeSelect = (time: string, type: 'start' | 'end') => {
+  // Handler for individual time slot changes (start/end)
+  const handleTimeSlotChange = (time: string, type: 'start' | 'end') => {
     if (type === 'start') {
       setSelectedStartTime(time);
-      if (selectedEndTime && selectedEndTime <= time) {
-        setSelectedEndTime('');
-      }
     } else {
       setSelectedEndTime(time);
     }
   };
 
-  const handleBookingSubmit = async (bookingData: Omit<Booking, 'id' | 'created_at'>) => {
-    await onSubmitBooking(bookingData);
-    onClose(); // Close modal after submission
+  // Handler for when a full time slot range is confirmed in TimeSlots component
+  const handleConfirmTimeSlotSelection = (startTime: string, endTime: string) => {
+    setSelectedStartTime(startTime);
+    setSelectedEndTime(endTime);
+    setShowReview(true); // Show review step after time slot is selected
   };
 
-  const canProceedToForm = selectedDate && selectedStartTime && selectedEndTime;
+  const handleReviewConfirm = () => {
+    setShowReview(false);
+    setShowForm(true); // Proceed to form from review
+  };
+
+  const handleReviewEdit = () => {
+    setShowReview(false);
+    setSelectedStartTime('');
+    setSelectedEndTime('');
+  };
+
+  const handleFormSubmit = async (booking: Omit<Booking, 'id' | 'created_at'>) => {
+    try {
+      await onSubmitBooking(booking);
+      onClose();
+    } catch (error) {
+      console.error("Booking submission failed in modal:", error);
+    }
+  };
+
+  const handleFormCancel = () => {
+    setShowForm(false);
+    setShowReview(true); // Go back to review from form
+  };
+
+  // Reset time selection and view when date or room changes
+  useEffect(() => {
+    setSelectedStartTime('');
+    setSelectedEndTime('');
+    setShowReview(false);
+    setShowForm(false);
+  }, [selectedDate, room.id]);
+
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-      <div className="bg-white rounded-xl shadow-2xl w-full max-w-4xl max-h-[90vh] flex flex-col relative"> {/* Added flex flex-col */}
-        {/* Sticky Header */}
-        <div className="sticky top-0 bg-white p-6 border-b border-gray-200 flex items-center justify-between z-10">
-          <h2 className="text-2xl font-bold text-gray-800">
-            จองห้องประชุม: {room.name}
-          </h2>
-          <button
-            onClick={onClose}
-            className="p-2 rounded-full hover:bg-gray-100 transition-colors text-gray-600"
-            title="ปิด"
-          >
-            <X className="w-6 h-6" />
-          </button>
+    <div className="fixed inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center z-50 p-4">
+      <div className="bg-white rounded-xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-y-auto relative">
+        <button
+          onClick={onClose}
+          className="absolute top-4 right-4 p-2 rounded-full bg-gray-100 hover:bg-gray-200 transition-colors"
+        >
+          <X className="w-5 h-5 text-gray-600" />
+        </button>
+
+        <div className="p-6 border-b border-gray-200">
+          <h3 className="text-2xl font-bold text-gray-800 mb-1">จองห้อง: {room.name}</h3>
+          <p className="text-gray-600">{room.description}</p>
         </div>
 
-        {/* Scrollable Content Area */}
-        <div className="flex-grow overflow-y-auto"> {/* Added flex-grow overflow-y-auto */}
-          <div className="p-6 space-y-8"> {/* Inner padding for content */}
-            {!showBookingForm ? (
-              <>
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                  <Calendar
-                    selectedDate={selectedDate}
-                    onDateSelect={setSelectedDate}
-                    bookings={bookings}
-                  />
-                  <TimeSlots
-                    timeSlots={getAvailableTimeSlots()}
-                    selectedStartTime={selectedStartTime}
-                    selectedEndTime={selectedEndTime}
-                    onTimeSelect={handleTimeSelect}
-                  />
-                </div>
-              </>
-            ) : (
-              <BookingForm
-                room={room}
-                selectedDate={selectedDate}
-                selectedStartTime={selectedStartTime}
-                selectedEndTime={selectedEndTime}
-                onSubmit={handleBookingSubmit}
-                onCancel={() => setShowBookingForm(false)}
-                submitting={submitting}
-              />
-            )}
-          </div>
+        <div className="p-6">
+          {!showReview && !showForm ? (
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+              <div>
+                <h4 className="text-xl font-semibold text-gray-800 mb-4 flex items-center">
+                  <CalendarIcon className="w-5 h-5 mr-2 text-blue-500" />
+                  เลือกวันที่
+                </h4>
+                <Calendar
+                  selectedDate={selectedDate}
+                  onDateSelect={setSelectedDate}
+                  bookings={bookings.filter(b => b.room_id === room.id)}
+                />
+              </div>
+              <div>
+                <h4 className="text-xl font-semibold text-gray-800 mb-4 flex items-center">
+                  <Clock className="w-5 h-5 mr-2 text-blue-500" />
+                  เลือกช่วงเวลา
+                </h4>
+                <TimeSlots
+                  selectedDate={selectedDate}
+                  roomBookings={roomBookingsForSelectedDate}
+                  selectedStartTime={selectedStartTime}
+                  selectedEndTime={selectedEndTime}
+                  onTimeSlotChange={handleTimeSlotChange}
+                  onSelectTimeSlot={handleConfirmTimeSlotSelection}
+                />
+              </div>
+            </div>
+          ) : showReview && !showForm ? (
+            <BookingReview
+              room={room}
+              selectedDate={selectedDate}
+              selectedStartTime={selectedStartTime}
+              selectedEndTime={selectedEndTime}
+              onConfirm={handleReviewConfirm}
+              onEdit={handleReviewEdit}
+            />
+          ) : (
+            <BookingForm
+              room={room}
+              selectedDate={selectedDate}
+              selectedStartTime={selectedStartTime}
+              selectedEndTime={selectedEndTime}
+              onSubmit={handleFormSubmit}
+              onCancel={handleFormCancel}
+              submitting={submitting}
+              currentUser={user}
+            />
+          )}
         </div>
-
-        {/* Sticky Footer for "ดำเนินการจอง" button */}
-        {!showBookingForm && (
-          <div className="sticky bottom-0 bg-white p-6 border-t border-gray-200 flex justify-center z-10">
-            <button
-              onClick={() => setShowBookingForm(true)}
-              disabled={!canProceedToForm || submitting}
-              className="px-8 py-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors font-medium text-lg disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
-            >
-              {submitting ? (
-                <>
-                  <Loader2 className="w-5 h-5 animate-spin mr-2" />
-                  กำลังดำเนินการ...
-                </>
-              ) : (
-                'ดำเนินการจอง'
-              )}
-            </button>
-          </div>
-        )}
       </div>
     </div>
   );
