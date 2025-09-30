@@ -135,11 +135,11 @@ export default function MainLayout({
                   onAdminLoginClick();
                   setIsSidebarOpen(false);
                 }}
-                className="flex items-center w-full px-4 py-2 text-gray-600 hover:text-purple-600 hover:bg-purple-50 rounded-lg transition-colors mt-4"
-                title="เข้าสู่ระบบแอดมิน"
+                className="flex items-center w-full px-4 py-2 text-gray-600 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors mt-4"
+                title="เข้าสู่ระบบจัดการ"
               >
                 <Settings className="w-4 h-4 mr-3" />
-                <span>เข้าสู่ระบบแอดมิน</span>
+                <span>เข้าสู่ระบบจัดการ</span>
               </button>
             )}
           </div>

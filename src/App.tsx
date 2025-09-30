@@ -12,6 +12,7 @@ import BookingForm from './components/BookingForm';
 import BookingList from './components/BookingList';
 import AdminLogin from './components/AdminLogin';
 import AdminDashboard from './components/admin/AdminDashboard';
+import UserDashboard from './components/UserDashboard';
 import MainLayout from './components/MainLayout';
 import BookingModal from './components/BookingModal';
 import { Loader2, AlertCircle } from 'lucide-react';
@@ -117,6 +118,18 @@ function App() {
     );
   }
 
+  if (viewMode === 'admin' && user && !isAdmin) {
+    return (
+      <UserDashboard 
+        user={user}
+        onLogout={() => {
+          logout();
+          setViewMode('booking');
+        }}
+        onBackToMain={() => setViewMode('booking')}
+      />
+    );
+  }
   return (
     <MainLayout
       viewMode={viewMode}

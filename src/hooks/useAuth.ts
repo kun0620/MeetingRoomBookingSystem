@@ -142,20 +142,22 @@ export function useAuth() {
         throw error;
       }
 
-      if (data && data.role === 'admin') {
+      if (data) {
         const adminUser: User = {
           id: data.id, // Use department code ID as user ID
           email: `${data.department_name.toLowerCase().replace(/\s/g, '')}@department.com`, // Mock email
+          name: data.department_name,
+          department_code: data.code,
           is_active: true,
-          role: 'admin',
+          role: data.role, // Use the actual role from department_codes
           created_at: data.created_at,
         };
         if (mounted.current) setDepartmentCodeAdmin(adminUser);
         localStorage.setItem('department_code_admin', JSON.stringify(adminUser));
         return true;
-      } else {
-        throw new Error('รหัสประจำแผนกไม่ถูกต้อง หรือไม่มีสิทธิ์เป็นผู้ดูแลระบบ');
       }
+      
+      throw new Error('รหัสประจำแผนกไม่ถูกต้อง');
     } catch (err) {
       if (mounted.current) setDepartmentCodeError(err instanceof Error ? err.message : 'เกิดข้อผิดพลาดในการเข้าสู่ระบบด้วยรหัสแผนก');
       return false;

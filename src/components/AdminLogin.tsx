@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Lock, ArrowLeft, Loader2 } from 'lucide-react';
+import { Lock, ArrowLeft, Loader2, User, Shield } from 'lucide-react';
 
 interface AdminLoginProps {
   onLogin: (code: string) => Promise<boolean>; // Changed to accept only code
@@ -38,10 +38,10 @@ export default function AdminLogin({ onLogin, loading = false, error, onBackToMa
         <div className="text-center">
           <Lock className="mx-auto h-12 w-12 text-blue-500" />
           <h2 className="mt-6 text-3xl font-bold text-gray-900">
-            เข้าสู่ระบบแอดมิน
+            เข้าสู่ระบบ
           </h2>
           <p className="mt-2 text-sm text-gray-600">
-            กรุณาป้อนรหัสประจำแผนกเพื่อเข้าสู่ระบบ
+            กรุณาป้อนรหัสประจำแผนกเพื่อเข้าสู่ระบบจัดการ
           </p>
         </div>
 
@@ -77,9 +77,20 @@ export default function AdminLogin({ onLogin, loading = false, error, onBackToMa
 
           <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
             <p className="text-blue-800 text-sm">
-              <strong>สำหรับผู้ดูแลระบบ:</strong><br />
-              1. สร้างรหัสแผนกใหม่ในตาราง `public.department_codes` ใน Supabase Studio<br />
-              2. กำหนด `role` ของรหัสแผนกนั้นเป็น 'admin'
+              <div className="flex items-start space-x-3 mb-3">
+                <User className="w-5 h-5 text-blue-600 mt-0.5" />
+                <div>
+                  <strong>สำหรับผู้ใช้ทั่วไป:</strong><br />
+                  สามารถดูและแก้ไขการจองของตัวเองได้
+                </div>
+              </div>
+              <div className="flex items-start space-x-3">
+                <Shield className="w-5 h-5 text-blue-600 mt-0.5" />
+                <div>
+                  <strong>สำหรับผู้ดูแลระบบ:</strong><br />
+                  เข้าถึงหน้าจัดการระบบทั้งหมด
+                </div>
+              </div>
             </p>
           </div>
 

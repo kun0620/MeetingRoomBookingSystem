@@ -30,7 +30,7 @@ export interface Room {
 export interface DepartmentCode {
   id: string;
   code: string;
-  name: string; // Maps to department_name in DB
+  department_name: string; // Maps to department_name in DB
   role: string;
   created_at: string;
 }
