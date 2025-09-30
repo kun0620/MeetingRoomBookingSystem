@@ -3,7 +3,7 @@ import { User, Booking, Room, DepartmentCode } from '../types';
 import { useBookings } from '../hooks/useBookings';
 import { useRooms } from '../hooks/useRooms';
 import { useDepartmentCodes } from '../hooks/useDepartmentCodes';
-import { Calendar, Search, Filter, ChevronDown, Clock, User as UserIcon, Tag, Mail, Phone, X, Edit, Home, LogOut, Menu } from 'lucide-react';
+import { Calendar, Search, Filter, ChevronDown, Clock, User as UserIcon, Tag, Mail, Phone, X, CreditCard as Edit, Home, LogOut, Menu } from 'lucide-react';
 import { formatDateThai } from '../utils/dateUtils';
 import EditBookingModal from './EditBookingModal';
 import CancelBookingModal from './CancelBookingModal';
