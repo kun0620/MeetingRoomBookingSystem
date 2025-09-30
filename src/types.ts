@@ -49,4 +49,4 @@ export type DepartmentCode = {
   created_at: string;
 };
 
-export type ViewMode = 'booking' | 'status' | 'admin' | 'user-dashboard'; // Added 'user-dashboard'
+export type ViewMode = 'booking' | 'status' | 'admin' | 'user-dashboard';
