@@ -1,36 +1,52 @@
-export interface Booking {
-  id: string;
-  room_id: string;
-  user_name: string;
-  user_email: string;
-  user_phone: string;
-  title: string;
-  description: string | null;
-  start_time: string; // HH:MM:SS or HH:MM from DB
-  end_time: string;   // HH:MM:SS or HH:MM from DB
-  date: string;       // YYYY-MM-DD from DB
-  status: 'pending' | 'confirmed' | 'cancelled' | 'completed';
-  department_code: string; // Matches DB column name
-  department_name: string | null;
-  contact_person: string | null; // Matches DB column name
-  contact_email: string | null;  // Matches DB column name
-  created_at: string;
-}
-
-export interface Room {
+export type Room = {
   id: string;
   name: string;
   capacity: number;
   description: string;
-  amenities: string[];
-  color: string;
+  image_url: string;
+  is_active: boolean;
   created_at: string;
-}
+};
 
-export interface DepartmentCode {
+export type Booking = {
+  id: string;
+  room_id: string;
+  user_id: string;
+  date: string;
+  start_time: string;
+  end_time: string;
+  purpose: string;
+  status: 'pending' | 'approved' | 'rejected' | 'cancelled';
+  created_at: string;
+  department_code?: string; // Optional for department code bookings
+  user_name?: string; // For display purposes, not stored in DB
+  room_name?: string; // For display purposes, not stored in DB
+};
+
+export type TimeSlot = {
+  time: string;
+  isBooked: boolean;
+  bookingId?: string;
+  purpose?: string;
+  bookedBy?: string;
+};
+
+export type User = {
+  id: string;
+  email: string;
+  name?: string;
+  department_code?: string;
+  is_active: boolean;
+  role: 'user' | 'admin';
+  created_at: string;
+};
+
+export type DepartmentCode = {
   id: string;
   code: string;
-  name: string; // Maps to department_name in DB
-  role: string;
+  department_name: string;
+  role: 'user' | 'admin';
   created_at: string;
-}
+};
+
+export type ViewMode = 'booking' | 'status' | 'admin' | 'user-dashboard'; // Added 'user-dashboard'

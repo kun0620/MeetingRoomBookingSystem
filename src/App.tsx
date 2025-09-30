@@ -12,6 +12,7 @@ import BookingForm from './components/BookingForm';
 import BookingList from './components/BookingList';
 import AdminLogin from './components/AdminLogin';
 import AdminDashboard from './components/admin/AdminDashboard';
+import UserDashboard from './components/UserDashboard';
 import MainLayout from './components/MainLayout';
 import BookingModal from './components/BookingModal';
 import { Loader2, AlertCircle } from 'lucide-react';
@@ -53,7 +54,12 @@ function App() {
   const handleAdminLogin = async (code: string) => {
     const success = await loginAdminWithDepartmentCode(code);
     if (success) {
-      setViewMode('admin');
+      // After successful login, determine view mode based on user role
+      if (isAdmin) { // isAdmin will be true if the logged-in user (departmentCodeAdmin) has role 'admin'
+        setViewMode('admin');
+      } else { // If not admin, it's a regular user (departmentCodeAdmin with role 'user')
+        setViewMode('user-dashboard');
+      }
     }
     return success;
   };
@@ -63,7 +69,7 @@ function App() {
     booking.date === selectedDateForStatus
   );
 
-  if (roomsLoading || bookingsLoading) {
+  if (roomsLoading || bookingsLoading || authLoading) { // Include authLoading
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
@@ -74,14 +80,14 @@ function App() {
     );
   }
 
-  if (roomsError || bookingsError) {
-    console.error('App errors:', { roomsError, bookingsError });
+  if (roomsError || bookingsError || authError) { // Include authError
+    console.error('App errors:', { roomsError, bookingsError, authError });
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
           <AlertCircle className="w-8 h-8 mx-auto mb-4 text-red-500" />
           <p className="text-red-600 mb-4">เกิดข้อผิดพลาดในการโหลดข้อมูล</p>
-          <p className="text-gray-600">{roomsError || bookingsError}</p>
+          <p className="text-gray-600">{roomsError || bookingsError || authError}</p>
           <button 
             onClick={() => window.location.reload()} 
             className="mt-4 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600"
@@ -93,7 +99,8 @@ function App() {
     );
   }
 
-  if (viewMode === 'admin' && !user) {
+  // Conditional rendering for dashboards and login
+  if (!user && viewMode === 'admin') { // Only show AdminLogin if no user is logged in and viewMode is 'admin'
     return (
       <AdminLogin 
         onLogin={handleAdminLogin}
@@ -104,7 +111,7 @@ function App() {
     );
   }
 
-  if (viewMode === 'admin' && user && isAdmin) {
+  if (user && isAdmin && viewMode === 'admin') { // Show AdminDashboard if admin is logged in and viewMode is 'admin'
     return (
       <AdminDashboard 
         user={user}
@@ -117,6 +124,20 @@ function App() {
     );
   }
 
+  if (user && !isAdmin && viewMode === 'user-dashboard') { // Show UserDashboard if non-admin user is logged in and viewMode is 'user-dashboard'
+    return (
+      <UserDashboard 
+        user={user}
+        onLogout={() => {
+          logout();
+          setViewMode('booking');
+        }}
+        onBackToMain={() => setViewMode('booking')}
+      />
+    );
+  }
+
+  // Default rendering for booking and status views, wrapped in MainLayout
   return (
     <MainLayout
       viewMode={viewMode}
@@ -124,7 +145,7 @@ function App() {
       user={user}
       isAdmin={isAdmin}
       onLogout={logout}
-      onAdminLoginClick={() => setViewMode('admin')}
+      onAdminLoginClick={() => setViewMode('admin')} // Set viewMode to 'admin' to show AdminLogin form
     >
       {viewMode === 'booking' ? (
         <>

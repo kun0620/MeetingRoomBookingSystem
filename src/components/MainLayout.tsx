@@ -1,5 +1,5 @@
 import React, { useState, ReactNode } from 'react';
-import { CalendarDays, Building, LineChart, MessageSquare, Settings, LogOut, Home, Menu, X, Users } from 'lucide-react';
+import { CalendarDays, Building, LineChart, MessageSquare, Settings, LogOut, Home, Menu, X, Users, UserRound } from 'lucide-react'; // Added UserRound
 import { User, ViewMode } from '../types'; // Import ViewMode
 
 interface MainLayoutProps {
@@ -25,8 +25,13 @@ export default function MainLayout({
 
   const menuItems = [
     { id: 'booking', label: 'จองห้อง', icon: CalendarDays },
-    { id: 'status', label: 'สถานะการจอง', icon: LineChart }, // Changed label and id
+    { id: 'status', label: 'สถานะการจอง', icon: LineChart },
   ];
+
+  // Add "My Bookings" for logged-in non-admin users
+  if (user && !isAdmin) {
+    menuItems.push({ id: 'user-dashboard', label: 'การจองของฉัน', icon: UserRound });
+  }
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
@@ -116,7 +121,8 @@ export default function MainLayout({
               <p className="text-sm text-gray-500 mb-4">ยังไม่ได้เข้าสู่ระบบ</p>
             )}
 
-            {isAdmin && (
+            {/* Admin button for logged-in admins */}
+            {user && isAdmin && (
               <button
                 onClick={() => {
                   setViewMode('admin');
@@ -129,17 +135,18 @@ export default function MainLayout({
                 <span>แอดมิน</span>
               </button>
             )}
-            {!user && !isAdmin && (
+            {/* Login button for non-logged-in users */}
+            {!user && (
               <button
                 onClick={() => {
-                  onAdminLoginClick();
+                  onAdminLoginClick(); // This will set viewMode to 'admin' for login form
                   setIsSidebarOpen(false);
                 }}
-                className="flex items-center w-full px-4 py-2 text-gray-600 hover:text-purple-600 hover:bg-purple-50 rounded-lg transition-colors mt-4"
-                title="เข้าสู่ระบบแอดมิน"
+                className="flex items-center w-full px-4 py-2 text-gray-600 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors mt-4"
+                title="เข้าสู่ระบบจัดการ"
               >
                 <Settings className="w-4 h-4 mr-3" />
-                <span>เข้าสู่ระบบแอดมิน</span>
+                <span>เข้าสู่ระบบจัดการ</span>
               </button>
             )}
           </div>
