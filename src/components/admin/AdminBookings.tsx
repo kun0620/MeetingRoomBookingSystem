@@ -3,7 +3,7 @@ import { useBookings } from '../../hooks/useBookings';
 import { useRooms } from '../../hooks/useRooms';
 import { useDepartmentCodes } from '../../hooks/useDepartmentCodes';
 import { Calendar, Clock, User, Phone, Mail, X, Search, Filter, Loader2, ChevronDown, Tag, Edit, Building } from 'lucide-react';
-import { formatDateTimeThai, formatDateThai, formatTime } from '../../utils/dateUtils';
+import { formatDateThai, formatTime } from '../../utils/dateUtils'; // Removed formatDateTimeThai
 import CancelBookingModal from '../../components/CancelBookingModal';
 import EditBookingModal from '../../components/EditBookingModal';
 import { Booking, Room, DepartmentCode } from '../../types';

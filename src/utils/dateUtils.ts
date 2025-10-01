@@ -21,10 +21,11 @@ export const formatDateThai = (dateString: string): string => {
   });
 };
 
-export const formatTime = (date: Date): string => {
-  const hours = date.getHours().toString().padStart(2, '0');
-  const minutes = date.getMinutes().toString().padStart(2, '0');
-  return `${hours}:${minutes}`;
+// Modified formatTime to accept a time string (e.g., "HH:MM")
+export const formatTime = (timeString: string): string => {
+  // Assuming timeString is in "HH:MM" format
+  const [hours, minutes] = timeString.split(':').map(Number);
+  return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
 };
 
 export const isPastTime = (time: string, compareDate: Date): boolean => {
