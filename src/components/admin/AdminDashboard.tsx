@@ -72,7 +72,7 @@ export default function AdminDashboard({ user, onLogout, onBackToMain }: AdminDa
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 flex flex-col">
       {/* Sidebar Backdrop for mobile */}
       {isSidebarOpen && (
         <div
@@ -81,27 +81,52 @@ export default function AdminDashboard({ user, onLogout, onBackToMain }: AdminDa
         ></div>
       )}
 
+      {/* Global Fixed Header for Admin Dashboard */}
+      <header className="fixed top-0 left-0 w-full bg-white shadow-sm border-b z-30">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex items-center justify-between py-4">
+            {/* Left section: Admin title and mobile menu button */}
+            <div className="flex items-center">
+              <button
+                onClick={() => setIsSidebarOpen(true)}
+                className="lg:hidden p-2 rounded-md text-gray-600 hover:bg-gray-100 mr-3"
+              >
+                <Menu className="w-5 h-5" />
+              </button>
+              <div className="flex items-center"> {/* Always show app title in header */}
+                <Settings className="w-8 h-8 text-gray-700 mr-3" />
+                <div>
+                  <h1 className="text-2xl font-bold text-gray-900">แอดมิน</h1>
+                  <p className="text-sm text-gray-500">ระบบจัดการ</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </header>
+
       {/* Sidebar */}
       <aside
-        className={`fixed top-0 left-0 bg-white text-gray-900 h-screen transition-transform duration-300 ease-in-out z-50 border-r border-gray-200
-          w-[290px]
+        className={`fixed top-0 left-0 bg-white text-gray-900 transition-transform duration-300 ease-in-out z-50 border-r border-gray-200
+          w-[290px] h-screen lg:top-16 lg:h-[calc(100vh-4rem)]
           ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'}
-          lg:translate-x-0`} // On large screens, it's always visible and fixed
+          lg:translate-x-0`}
       >
-        <div className="py-4 px-6 flex items-center justify-between border-b border-gray-200 lg:justify-start">
+        {/* Sidebar Header (only visible on mobile) */}
+        <div className="py-4 px-6 flex items-center justify-between border-b border-gray-200 lg:hidden">
           <div className="flex items-center">
-            <Settings className="w-7 h-7 text-gray-700 mr-2" /> {/* Changed from text-blue-500 */}
+            <Settings className="w-7 h-7 text-gray-700 mr-2" />
             <h1 className="text-xl font-bold text-gray-900">แอดมิน</h1>
           </div>
           <button
             onClick={() => setIsSidebarOpen(false)}
-            className="lg:hidden p-2 rounded-md text-gray-600 hover:bg-gray-100"
+            className="p-2 rounded-md text-gray-600 hover:bg-gray-100"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
 
-        <div className="flex flex-col overflow-y-auto duration-300 ease-in-out no-scrollbar p-6">
+        <div className="flex flex-col overflow-y-auto duration-300 ease-in-out no-scrollbar p-6 h-[calc(100%-70px)] lg:h-full">
           <nav className="mb-6">
             <div className="flex flex-col gap-4">
               <div>
@@ -119,12 +144,12 @@ export default function AdminDashboard({ user, onLogout, onBackToMain }: AdminDa
                           className={`flex items-center w-full px-4 py-2 rounded-lg font-medium transition-colors group
                             ${
                               currentView === item.id
-                                ? 'bg-gray-200 text-gray-900' // Changed from bg-blue-500 text-white
+                                ? 'bg-gray-200 text-gray-900'
                                 : 'text-gray-700 hover:bg-gray-100'
                             }`}
                         >
-                          <Icon className={`w-4 h-4 mr-3 ${currentView === item.id ? 'text-gray-700' : 'text-gray-500 group-hover:text-gray-700'}`} /> {/* Changed icon colors */}
-                          <span className={`${currentView === item.id ? 'text-gray-900' : 'text-gray-700 group-hover:text-gray-900'}`}>{item.label}</span> {/* Changed text colors */}
+                          <Icon className={`w-4 h-4 mr-3 ${currentView === item.id ? 'text-gray-700' : 'text-gray-500 group-hover:text-gray-700'}`} />
+                          <span className={`${currentView === item.id ? 'text-gray-900' : 'text-gray-700 group-hover:text-gray-900'}`}>{item.label}</span>
                         </button>
                       </li>
                     );
@@ -137,8 +162,8 @@ export default function AdminDashboard({ user, onLogout, onBackToMain }: AdminDa
           {/* User info, Home, Logout buttons moved to sidebar for consistency */}
           <div className="mt-auto pt-6 border-t border-gray-200">
             <div className="flex items-center mb-4">
-              <div className="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center mr-3"> {/* Changed from bg-blue-100 */}
-                <Users className="w-4 h-4 text-gray-600" /> {/* Changed from text-blue-600 */}
+              <div className="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center mr-3">
+                <Users className="w-4 h-4 text-gray-600" />
               </div>
               <div>
                 <p className="text-sm font-medium text-gray-900">{user.name || 'ผู้ดูแลระบบ'}</p>
@@ -148,7 +173,7 @@ export default function AdminDashboard({ user, onLogout, onBackToMain }: AdminDa
 
             <button
               onClick={onBackToMain}
-              className="flex items-center w-full px-4 py-2 text-gray-600 hover:text-gray-800 hover:bg-gray-50 rounded-lg transition-colors mb-2" // Changed hover text color
+              className="flex items-center w-full px-4 py-2 text-gray-600 hover:text-gray-800 hover:bg-gray-50 rounded-lg transition-colors mb-2"
               title="กลับสู่หน้าหลัก"
             >
               <Home className="w-4 h-4 mr-3" />
@@ -168,38 +193,7 @@ export default function AdminDashboard({ user, onLogout, onBackToMain }: AdminDa
       </aside>
 
       {/* Main content area */}
-      <div className="flex-1 lg:ml-[290px]"> {/* Added lg:ml-[290px] to push content right on large screens */}
-        {/* Header for main content (now includes sidebar toggle for mobile) */}
-        <header className="bg-white shadow-sm border-b">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="flex items-center justify-between py-4">
-              {/* Left section: Admin title and mobile menu button */}
-              <div className="flex items-center">
-                <button
-                  onClick={() => setIsSidebarOpen(true)}
-                  className="lg:hidden p-2 rounded-md text-gray-600 hover:bg-gray-100 mr-3"
-                >
-                  <Menu className="w-5 h-5" />
-                </button>
-                <div className="hidden lg:flex items-center"> {/* Hide on mobile, show on lg+ */}
-                  <Settings className="w-8 h-8 text-gray-700 mr-3" /> {/* Changed from text-blue-500 */}
-                  <div>
-                    <h1 className="text-2xl font-bold text-gray-900">แอดมิน</h1>
-                    <p className="text-sm text-gray-500">ระบบจัดการ</p>
-                  </div>
-                </div>
-                <div className="lg:hidden flex items-center"> {/* Show on mobile, hide on lg+ */}
-                  <Settings className="w-6 h-6 text-gray-700 mr-2" /> {/* Changed from text-blue-500 */}
-                  <div>
-                    <h1 className="text-xl font-bold text-gray-900">แอดมิน</h1>
-                    <p className="text-sm text-gray-500">ระบบจัดการ</p>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </header>
-
+      <div className="flex-1 lg:ml-[290px] pt-16"> {/* Added pt-16 to push content right on large screens */}
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           {renderContent()}
         </div>

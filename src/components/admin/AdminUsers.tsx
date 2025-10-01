@@ -1,7 +1,12 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useUsers } from '../../hooks/useUsers';
-import { Users, Plus, CreditCard as Edit, Trash2, Mail, Phone, Loader as Loader2, Shield, User as UserIcon, ChevronDown } from 'lucide-react';
-import { User } from '../../types';
+import { Users, Plus, CreditCard as Edit, Trash2, Mail, Phone, Loader2, Shield, User as UserIcon, ChevronDown } from 'lucide-react';
+import { User, userSchema } from '../../types';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
+
+type UserFormInputs = z.infer<typeof userSchema>;
 
 export default function AdminUsers() {
   const { users, loading, createUser, updateUser, deleteUser } = useUsers();
@@ -9,56 +14,53 @@ export default function AdminUsers() {
   const [editingUser, setEditingUser] = useState<User | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
-  const [formData, setFormData] = useState({
-    email: '',
-    name: '',
-    phone: '',
-    role: 'user' as 'admin' | 'user',
-    is_active: true
-  });
-
-  const resetForm = () => {
-    setFormData({
+  const { register, handleSubmit, reset, setValue, formState: { errors } } = useForm<UserFormInputs>({
+    resolver: zodResolver(userSchema),
+    defaultValues: {
       email: '',
       name: '',
       phone: '',
       role: 'user',
       is_active: true
-    });
-    setEditingUser(null);
-    setShowForm(false);
-  };
+    }
+  });
+
+  useEffect(() => {
+    if (editingUser) {
+      setValue('email', editingUser.email);
+      setValue('name', editingUser.name || '');
+      setValue('phone', editingUser.phone || '');
+      setValue('role', editingUser.role as 'admin' | 'user' || 'user');
+      setValue('is_active', editingUser.is_active ?? true);
+    } else {
+      reset();
+    }
+  }, [editingUser, reset, setValue]);
 
   const handleAddUserClick = () => {
-    resetForm();
+    setEditingUser(null);
+    reset();
     setShowForm(true);
   };
 
   const handleEdit = (user: User) => {
-    setFormData({
-      email: user.email,
-      name: user.name,
-      phone: user.phone || '',
-      role: user.role,
-      is_active: user.is_active
-    });
     setEditingUser(user);
     setShowForm(true);
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const onSubmit = async (data: UserFormInputs) => {
     setSubmitting(true);
 
     try {
       if (editingUser) {
-        await updateUser(editingUser.id, formData);
+        await updateUser(editingUser.id, data);
         alert('อัปเดตผู้ใช้สำเร็จ!');
       } else {
-        await createUser(formData);
+        await createUser(data);
         alert('เพิ่มผู้ใช้สำเร็จ!');
       }
-      resetForm();
+      setShowForm(false);
+      reset();
     } catch (error) {
       alert(`เกิดข้อผิดพลาด: ${error instanceof Error ? error.message : 'ไม่สามารถบันทึกข้อมูลได้'}`);
     } finally {
@@ -177,8 +179,8 @@ export default function AdminUsers() {
                       </div>
                       
                       <div className="text-xs text-gray-500">
-                        <p>สมัครเมื่อ: {new Date(user.created_at).toLocaleDateString('th-TH')}</p>
-                        <p>อัปเดตล่าสุด: {new Date(user.updated_at).toLocaleDateString('th-TH')}</p>
+                        <p>สมัครเมื่อ: {new Date(user.created_at!).toLocaleDateString('th-TH')}</p>
+                        <p>อัปเดตล่าสุด: {new Date(user.updated_at!).toLocaleDateString('th-TH')}</p>
                       </div>
                     </div>
                   </details>
@@ -193,7 +195,7 @@ export default function AdminUsers() {
                     <Edit className="w-4 h-4" />
                   </button>
                   <button
-                    onClick={() => handleDelete(user.id, user.name)}
+                    onClick={() => handleDelete(user.id, user.name || user.email)}
                     className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
                     title="ปิดใช้งาน"
                   >
@@ -223,70 +225,71 @@ export default function AdminUsers() {
                 {editingUser ? 'แก้ไขสมาชิก' : 'เพิ่มสมาชิกใหม่'}
               </h3>
 
-              <form onSubmit={handleSubmit} className="space-y-4">
+              <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
                     อีเมล *
                   </label>
                   <input
+                    id="email"
                     type="email"
-                    required
-                    value={formData.email}
-                    onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
+                    {...register('email')}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     placeholder="example@email.com"
                     disabled={!!editingUser}
                   />
+                  {errors.email && <p className="text-red-500 text-xs mt-1">{errors.email.message}</p>}
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-2">
                     ชื่อ *
                   </label>
                   <input
+                    id="name"
                     type="text"
-                    required
-                    value={formData.name}
-                    onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
+                    {...register('name')}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     placeholder="ชื่อผู้ใช้"
                   />
+                  {errors.name && <p className="text-red-500 text-xs mt-1">{errors.name.message}</p>}
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label htmlFor="phone" className="block text-sm font-medium text-gray-700 mb-2">
                     เบอร์โทรศัพท์
                   </label>
                   <input
+                    id="phone"
                     type="tel"
-                    value={formData.phone}
-                    onChange={(e) => setFormData(prev => ({ ...prev, phone: e.target.value }))}
+                    {...register('phone')}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     placeholder="0xx-xxx-xxxx"
                   />
+                  {errors.phone && <p className="text-red-500 text-xs mt-1">{errors.phone.message}</p>}
                 </div>
 
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                <div className="relative">
+                  <label htmlFor="role" className="block text-sm font-medium text-gray-700 mb-2">
                     บทบาท
                   </label>
                   <select
-                    value={formData.role}
-                    onChange={(e) => setFormData(prev => ({ ...prev, role: e.target.value as 'admin' | 'user' }))}
+                    id="role"
+                    {...register('role')}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent appearance-none"
                   >
                     <option value="user">ผู้ใช้ทั่วไป</option>
                     <option value="admin">ผู้ดูแลระบบ</option>
                   </select>
-                  <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4 pointer-events-none" />
+                  <ChevronDown className="absolute right-3 top-1/2 transform translate-y-1/2 text-gray-400 w-4 h-4 pointer-events-none" />
+                  {errors.role && <p className="text-red-500 text-xs mt-1">{errors.role.message}</p>}
                 </div>
 
                 <div className="flex items-center">
                   <input
-                    type="checkbox"
                     id="is_active"
-                    checked={formData.is_active}
-                    onChange={(e) => setFormData(prev => ({ ...prev, is_active: e.target.checked }))}
+                    type="checkbox"
+                    {...register('is_active')}
                     className="mr-2"
                   />
                   <label htmlFor="is_active" className="text-sm text-gray-700">
@@ -297,7 +300,7 @@ export default function AdminUsers() {
                 <div className="flex flex-col sm:flex-row gap-4 pt-4">
                   <button
                     type="button"
-                    onClick={resetForm}
+                    onClick={() => { setShowForm(false); reset(); setEditingUser(null); }}
                     disabled={submitting}
                     className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50"
                   >

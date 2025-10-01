@@ -1,3 +1,5 @@
+import { z } from 'zod';
+
 export type Room = {
   id: string;
   name: string;
@@ -41,6 +43,14 @@ export type User = {
   updated_at?: string;
 };
 
+export type DepartmentCode = {
+  id: string;
+  code: string;
+  department_name: string;
+  role: 'admin' | 'user';
+  created_at: string;
+};
+
 export type CalendarDay = {
   date: string;
   isToday: boolean;
@@ -50,3 +60,18 @@ export type CalendarDay = {
 };
 
 export type ViewMode = 'booking' | 'status' | 'admin'; // Updated type
+
+// Zod Schemas for validation
+export const userSchema = z.object({
+  email: z.string().email('รูปแบบอีเมลไม่ถูกต้อง').min(1, 'กรุณากรอกอีเมล'),
+  name: z.string().min(1, 'กรุณากรอกชื่อ'),
+  phone: z.string().optional(),
+  role: z.enum(['admin', 'user'], { message: 'บทบาทไม่ถูกต้อง' }).default('user'),
+  is_active: z.boolean().default(true),
+});
+
+export const departmentCodeSchema = z.object({
+  code: z.string().min(1, 'กรุณากรอกรหัสแผนก').max(10, 'รหัสแผนกต้องไม่เกิน 10 ตัวอักษร').regex(/^[A-Z0-9]+$/, 'รหัสแผนกต้องเป็นตัวอักษรภาษาอังกฤษตัวพิมพ์ใหญ่หรือตัวเลขเท่านั้น'),
+  department_name: z.string().min(1, 'กรุณากรอกชื่อแผนก'),
+  role: z.enum(['admin', 'user'], { message: 'สิทธิ์การใช้งานไม่ถูกต้อง' }).default('user'),
+});

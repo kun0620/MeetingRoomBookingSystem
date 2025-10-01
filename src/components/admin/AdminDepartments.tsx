@@ -1,7 +1,12 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useDepartmentCodes } from '../../hooks/useDepartmentCodes';
-import { Building2, Plus, CreditCard as Edit, Trash2, Loader2, Shield, Users, Tag } from 'lucide-react';
-import { DepartmentCode } from '../../types';
+import { Building2, Plus, CreditCard as Edit, Trash2, Loader2, Shield, Users, Tag, ChevronDown } from 'lucide-react';
+import { DepartmentCode, departmentCodeSchema } from '../../types';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
+
+type DepartmentFormInputs = z.infer<typeof departmentCodeSchema>;
 
 export default function AdminDepartments() {
   const { 
@@ -16,50 +21,49 @@ export default function AdminDepartments() {
   const [editingDepartment, setEditingDepartment] = useState<DepartmentCode | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
-  const [formData, setFormData] = useState({
-    code: '',
-    department_name: '',
-    role: 'user' as 'admin' | 'user'
-  });
-
-  const resetForm = () => {
-    setFormData({
+  const { register, handleSubmit, reset, setValue, formState: { errors } } = useForm<DepartmentFormInputs>({
+    resolver: zodResolver(departmentCodeSchema),
+    defaultValues: {
       code: '',
       department_name: '',
       role: 'user'
-    });
-    setEditingDepartment(null);
-    setShowForm(false);
-  };
+    }
+  });
+
+  useEffect(() => {
+    if (editingDepartment) {
+      setValue('code', editingDepartment.code);
+      setValue('department_name', editingDepartment.department_name);
+      setValue('role', editingDepartment.role);
+    } else {
+      reset();
+    }
+  }, [editingDepartment, reset, setValue]);
 
   const handleAddDepartmentClick = () => {
-    resetForm();
+    setEditingDepartment(null);
+    reset();
     setShowForm(true);
   };
 
   const handleEdit = (department: DepartmentCode) => {
-    setFormData({
-      code: department.code,
-      department_name: department.department_name,
-      role: department.role as 'admin' | 'user'
-    });
     setEditingDepartment(department);
     setShowForm(true);
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const onSubmit = async (data: DepartmentFormInputs) => {
     setSubmitting(true);
 
     try {
       if (editingDepartment) {
-        await updateDepartmentCode(editingDepartment.id, formData);
+        await updateDepartmentCode(editingDepartment.id, data);
         alert('อัปเดตแผนกสำเร็จ!');
       } else {
-        await createDepartmentCode(formData);
+        await createDepartmentCode(data);
         alert('เพิ่มแผนกสำเร็จ!');
       }
-      resetForm();
+      setShowForm(false);
+      reset();
     } catch (error) {
       alert(`เกิดข้อผิดพลาด: ${error instanceof Error ? error.message : 'ไม่สามารถบันทึกข้อมูลได้'}`);
     } finally {
@@ -204,51 +208,54 @@ export default function AdminDepartments() {
                 {editingDepartment ? 'แก้ไขแผนก' : 'เพิ่มแผนกใหม่'}
               </h3>
 
-              <form onSubmit={handleSubmit} className="space-y-4">
+              <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label htmlFor="code" className="block text-sm font-medium text-gray-700 mb-2">
                     รหัสแผนก *
                   </label>
                   <input
+                    id="code"
                     type="text"
-                    required
-                    value={formData.code}
-                    onChange={(e) => setFormData(prev => ({ ...prev, code: e.target.value.toUpperCase() }))}
+                    {...register('code')}
+                    onChange={(e) => setValue('code', e.target.value.toUpperCase())}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent font-mono"
                     placeholder="เช่น IT, HR, MKG"
                     disabled={!!editingDepartment}
                   />
+                  {errors.code && <p className="text-red-500 text-xs mt-1">{errors.code.message}</p>}
                   {editingDepartment && (
                     <p className="text-xs text-gray-500 mt-1">ไม่สามารถแก้ไขรหัสแผนกได้</p>
                   )}
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label htmlFor="department_name" className="block text-sm font-medium text-gray-700 mb-2">
                     ชื่อแผนก *
                   </label>
                   <input
+                    id="department_name"
                     type="text"
-                    required
-                    value={formData.department_name}
-                    onChange={(e) => setFormData(prev => ({ ...prev, department_name: e.target.value }))}
+                    {...register('department_name')}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     placeholder="เช่น แผนกเทคโนโลยีสารสนเทศ"
                   />
+                  {errors.department_name && <p className="text-red-500 text-xs mt-1">{errors.department_name.message}</p>}
                 </div>
 
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                <div className="relative">
+                  <label htmlFor="role" className="block text-sm font-medium text-gray-700 mb-2">
                     สิทธิ์การใช้งาน
                   </label>
                   <select
-                    value={formData.role}
-                    onChange={(e) => setFormData(prev => ({ ...prev, role: e.target.value as 'admin' | 'user' }))}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    id="role"
+                    {...register('role')}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent appearance-none"
                   >
                     <option value="user">ผู้ใช้ทั่วไป</option>
                     <option value="admin">ผู้ดูแลระบบ</option>
                   </select>
+                  <ChevronDown className="absolute right-3 top-1/2 transform translate-y-1/2 text-gray-400 w-4 h-4 pointer-events-none" />
+                  {errors.role && <p className="text-red-500 text-xs mt-1">{errors.role.message}</p>}
                   <p className="text-xs text-gray-500 mt-1">
                     ผู้ดูแลระบบสามารถเข้าถึงหน้าจัดการได้
                   </p>
@@ -257,7 +264,7 @@ export default function AdminDepartments() {
                 <div className="flex flex-col sm:flex-row gap-4 pt-4">
                   <button
                     type="button"
-                    onClick={resetForm}
+                    onClick={() => { setShowForm(false); reset(); setEditingDepartment(null); }}
                     disabled={submitting}
                     className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50"
                   >
