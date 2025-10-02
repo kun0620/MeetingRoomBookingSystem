@@ -1,251 +1,274 @@
 import React, { useState, useEffect } from 'react';
-import { Dialog } from '@headlessui/react';
-import { Booking, Room, DepartmentCode } from '../types';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
+import { Booking, Room, TimeSlot } from '../types';
+import { Loader2, X } from 'lucide-react';
+import { useBookings } from '../hooks/useBookings';
 
 interface EditBookingModalProps {
-  isOpen: boolean;
-  onClose: () => void;
-  booking: Booking | null;
+  booking: Booking;
   rooms: Room[];
-  departmentCodes: DepartmentCode[];
-  onSave: (updatedBooking: Booking) => void;
+  onSave: (bookingId: string, updatedData: Partial<Booking>) => Promise<void>;
+  onClose: () => void;
 }
 
-export default function EditBookingModal({ isOpen, onClose, booking, rooms, departmentCodes, onSave }: EditBookingModalProps) {
-  const [title, setTitle] = useState('');
-  const [userPhone, setUserPhone] = useState(''); // เพิ่ม state สำหรับเบอร์โทร
-  const [userEmail, setUserEmail] = useState(''); // เพิ่ม state สำหรับอีเมล
-  const [description, setDescription] = useState('');
+const bookingEditSchema = z.object({
+  title: z.string().min(3, 'หัวข้อต้องมีอย่างน้อย 3 ตัวอักษร').max(100, 'หัวข้อต้องไม่เกิน 100 ตัวอักษร'),
+  description: z.string().max(500, 'คำอธิบายต้องไม่เกิน 500 ตัวอักษร').optional(),
+  user_phone: z.string().optional().refine(val => !val || /^\d{9,10}$/.test(val), {
+    message: 'เบอร์โทรศัพท์ต้องมี 9-10 หลักและเป็นตัวเลขเท่านั้น'
+  }),
+  date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'รูปแบบวันที่ไม่ถูกต้อง (YYYY-MM-DD)'),
+  start_time: z.string().regex(/^\d{2}:\d{2}$/, 'รูปแบบเวลาไม่ถูกต้อง (HH:MM)'),
+  end_time: z.string().regex(/^\d{2}:\d{2}$/, 'รูปแบบเวลาไม่ถูกต้อง (HH:MM)'),
+});
 
-  // ฟิลด์เหล่านี้จะถูกปิดใช้งาน ไม่ให้แก้ไข
-  const [roomId, setRoomId] = useState('');
-  const [date, setDate] = useState('');
-  const [startTime, setStartTime] = useState('');
-  const [endTime, setEndTime] = useState('');
-  const [departmentCode, setDepartmentCode] = useState('');
+type BookingEditFormData = z.infer<typeof bookingEditSchema>;
+
+export default function EditBookingModal({ booking, rooms, onSave, onClose }: EditBookingModalProps) {
+  const { getAvailableTimeSlots } = useBookings();
+  const [availableSlots, setAvailableSlots] = useState<TimeSlot[]>([]);
+  const [slotsLoading, setSlotsLoading] = useState(false);
+
+  const { register, handleSubmit, formState: { errors, isSubmitting }, watch, setValue } = useForm<BookingEditFormData>({
+    resolver: zodResolver(bookingEditSchema),
+    defaultValues: {
+      title: booking.title,
+      description: booking.description || '',
+      user_phone: booking.user_phone || '',
+      date: booking.date,
+      start_time: booking.start_time,
+      end_time: booking.end_time,
+    },
+  });
+
+  const watchDate = watch('date');
+  const watchStartTime = watch('start_time');
+  const watchEndTime = watch('end_time');
+
+  const currentRoom = rooms.find(r => r.id === booking.room_id);
 
   useEffect(() => {
-    if (!booking) {
-      // Reset states if booking is null to prevent displaying stale data
-      setTitle('');
-      setUserPhone('');
-      setUserEmail('');
-      setDescription('');
-      setRoomId('');
-      setDate('');
-      setStartTime('');
-      setEndTime('');
-      setDepartmentCode('');
+    const fetchSlots = async () => {
+      if (currentRoom && watchDate) {
+        setSlotsLoading(true);
+        try {
+          const slots = await getAvailableTimeSlots(currentRoom.id, watchDate, booking.id);
+          setAvailableSlots(slots);
+        } catch (err) {
+          console.error('Failed to fetch available slots:', err);
+          alert('ไม่สามารถโหลดช่วงเวลาที่ว่างได้');
+        } finally {
+          setSlotsLoading(false);
+        }
+      }
+    };
+    fetchSlots();
+  }, [currentRoom, watchDate, booking.id, getAvailableTimeSlots]);
+
+  const onSubmit = async (data: BookingEditFormData) => {
+    // Basic time validation: start time must be before end time
+    if (data.start_time >= data.end_time) {
+      alert('เวลาเริ่มต้นต้องก่อนเวลาสิ้นสุด');
       return;
     }
 
-    setTitle(booking.title);
-    setUserPhone(booking.user_phone || ''); // ดึงค่า user_phone
-    setUserEmail(booking.user_email || ''); // ดึงค่า user_email
-    setDescription(booking.description || '');
+    // Check if the selected slot is available
+    const selectedSlot = availableSlots.find(slot =>
+      slot.time === data.start_time && slot.end === data.end_time
+    );
 
-    // ตั้งค่าฟิลด์ที่ถูกปิดใช้งาน (disabled)
-    setRoomId(booking.room_id);
-    setDepartmentCode(booking.department_code);
-
-    const fullStartTimeString = `${booking.date}T${booking.start_time}`;
-    const fullEndTimeString = `${booking.date}T${booking.end_time}`;
-
-    const start = new Date(fullStartTimeString);
-    const end = new Date(fullEndTimeString);
-
-    if (!isNaN(start.getTime()) && !isNaN(end.getTime())) {
-      setDate(booking.date);
-      setStartTime(booking.start_time.substring(0, 5));
-      setEndTime(booking.end_time.substring(0, 5));
-    } else {
-      console.error('Invalid date value received for booking:', booking, 'Full start time string:', fullStartTimeString, 'Full end time string:', fullEndTimeString);
-      setDate('');
-      setStartTime('');
-      setEndTime('');
+    if (!selectedSlot || !selectedSlot.available) {
+      alert('ช่วงเวลาที่เลือกไม่ว่าง กรุณาเลือกช่วงเวลาอื่น');
+      return;
     }
-  }, [booking]);
 
-  const handleSubmit = () => {
-    if (!booking) return;
-
-    const updatedBooking: Booking = {
-      ...booking,
-      title,
-      user_phone: userPhone, // อัปเดต user_phone
-      user_email: userEmail, // อัปเดต user_email
-      description: description,
-      // ฟิลด์อื่นๆ ที่ถูกปิดใช้งาน จะใช้ค่าเดิมจาก booking
-      room_id: roomId,
-      date: date,
-      start_time: startTime + ':00',
-      end_time: endTime + ':00',
-      department_code: departmentCode,
-    };
-
-    onSave(updatedBooking);
+    try {
+      await onSave(booking.id, data);
+      onClose();
+    } catch (error) {
+      alert(`เกิดข้อผิดพลาด: ${error instanceof Error ? error.message : 'ไม่สามารถบันทึกการแก้ไขได้'}`);
+    }
   };
 
-  if (!booking) return null;
+  const generateTimeOptions = (slots: TimeSlot[]) => {
+    const options: { value: string; label: string; available: boolean }[] = [];
+    const uniqueStartTimes = new Set<string>();
+
+    slots.forEach(slot => {
+      if (!uniqueStartTimes.has(slot.time)) {
+        options.push({ value: slot.time, label: slot.time, available: slot.available });
+        uniqueStartTimes.add(slot.time);
+      }
+    });
+    return options;
+  };
+
+  const generateEndTimeOptions = (slots: TimeSlot[], startTime: string) => {
+    const options: { value: string; label: string; available: boolean }[] = [];
+    const startIndex = slots.findIndex(slot => slot.time === startTime);
+
+    if (startIndex !== -1) {
+      for (let i = startIndex; i < slots.length; i++) {
+        const currentSlot = slots[i];
+        // Only add end times that are after the start time
+        if (currentSlot.end > startTime) {
+          options.push({ value: currentSlot.end, label: currentSlot.end, available: currentSlot.available });
+        }
+      }
+    }
+    return options;
+  };
+
+  const today = new Date().toISOString().split('T')[0];
 
   return (
-    <Dialog open={isOpen} onClose={onClose} className="relative z-50">
-      <div className="fixed inset-0 bg-black/30" aria-hidden="true" />
-      <div className="fixed inset-0 flex items-center justify-center p-4">
-        <Dialog.Panel className="bg-white rounded-lg p-6 w-full max-w-md">
-          <Dialog.Title className="text-lg font-semibold text-gray-900">
-            แก้ไขรายละเอียดการจอง
-          </Dialog.Title>
-
-          <div className="mt-4">
-            <label htmlFor="title" className="block text-sm font-medium text-gray-700">
-              หัวข้อการจอง
-            </label>
-            <input
-              type="text"
-              id="title"
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-            />
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+      <div className="bg-white rounded-xl shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+        <div className="p-6">
+          <div className="flex justify-between items-center mb-4">
+            <h3 className="text-2xl font-bold text-gray-800">แก้ไขการจอง</h3>
+            <button onClick={onClose} className="text-gray-500 hover:text-gray-700">
+              <X className="w-6 h-6" />
+            </button>
           </div>
 
-          {/* ฟิลด์ ห้องประชุม - ปิดใช้งาน */}
-          <div className="mt-4">
-            <label htmlFor="roomId" className="block text-sm font-medium text-gray-700">
-              ห้องประชุม
-            </label>
-            <select
-              id="roomId"
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm bg-gray-100 cursor-not-allowed"
-              value={roomId}
-              disabled // ปิดใช้งาน
-            >
-              {rooms.map((room) => (
-                <option key={room.id} value={room.id}>{room.name}</option>
-              ))}
-            </select>
-          </div>
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+            {/* Room Info (Read-only) */}
+            <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg text-sm text-blue-800">
+              <p><strong>ห้อง:</strong> {currentRoom?.name}</p>
+              <p><strong>ผู้จอง:</strong> {booking.user_name} ({booking.user_email})</p>
+            </div>
 
-          {/* ฟิลด์ แผนก - ปิดใช้งาน */}
-          <div className="mt-4">
-            <label htmlFor="departmentCode" className="block text-sm font-medium text-gray-700">
-              แผนก
-            </label>
-            <select
-              id="departmentCode"
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm bg-gray-100 cursor-not-allowed"
-              value={departmentCode}
-              disabled // ปิดใช้งาน
-            >
-              {departmentCodes.map((dept) => (
-                <option key={dept.id} value={dept.code}>{dept.department_name}</option>
-              ))}
-            </select>
-          </div>
-
-          {/* ฟิลด์ วันที่ - ปิดใช้งาน */}
-          <div className="mt-4">
-            <label htmlFor="date" className="block text-sm font-medium text-gray-700">
-              วันที่
-            </label>
-            <input
-              type="date"
-              id="date"
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm bg-gray-100 cursor-not-allowed"
-              value={date}
-              disabled // ปิดใช้งาน
-            />
-          </div>
-
-          {/* ฟิลด์ เวลาเริ่มต้น/สิ้นสุด - ปิดใช้งาน */}
-          <div className="mt-4 grid grid-cols-2 gap-4">
             <div>
-              <label htmlFor="startTime" className="block text-sm font-medium text-gray-700">
-                เวลาเริ่มต้น
+              <label htmlFor="title" className="block text-sm font-medium text-gray-700 mb-1">
+                หัวข้อการประชุม *
               </label>
               <input
-                type="time"
-                id="startTime"
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm bg-gray-100 cursor-not-allowed"
-                value={startTime}
-                disabled // ปิดใช้งาน
+                id="title"
+                type="text"
+                {...register('title')}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               />
+              {errors.title && <p className="text-red-500 text-xs mt-1">{errors.title.message}</p>}
             </div>
+
             <div>
-              <label htmlFor="endTime" className="block text-sm font-medium text-gray-700">
-                เวลาสิ้นสุด
+              <label htmlFor="description" className="block text-sm font-medium text-gray-700 mb-1">
+                รายละเอียด
+              </label>
+              <textarea
+                id="description"
+                {...register('description')}
+                rows={3}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              />
+              {errors.description && <p className="text-red-500 text-xs mt-1">{errors.description.message}</p>}
+            </div>
+
+            <div>
+              <label htmlFor="user_phone" className="block text-sm font-medium text-gray-700 mb-1">
+                เบอร์โทรศัพท์ผู้ติดต่อ
               </label>
               <input
-                type="time"
-                id="endTime"
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm bg-gray-100 cursor-not-allowed"
-                value={endTime}
-                disabled // ปิดใช้งาน
-            />
+                id="user_phone"
+                type="text"
+                {...register('user_phone')}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              />
+              {errors.user_phone && <p className="text-red-500 text-xs mt-1">{errors.user_phone.message}</p>}
             </div>
-          </div>
 
-          {/* ฟิลด์ เบอร์โทร - เปิดให้แก้ไข */}
-          <div className="mt-4">
-            <label htmlFor="userPhone" className="block text-sm font-medium text-gray-700">
-              เบอร์โทร
-            </label>
-            <input
-              type="text"
-              id="userPhone"
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
-              value={userPhone}
-              onChange={(e) => setUserPhone(e.target.value)}
-            />
-          </div>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div>
+                <label htmlFor="date" className="block text-sm font-medium text-gray-700 mb-1">
+                  วันที่ *
+                </label>
+                <input
+                  id="date"
+                  type="date"
+                  min={today}
+                  {...register('date')}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                />
+                {errors.date && <p className="text-red-500 text-xs mt-1">{errors.date.message}</p>}
+              </div>
 
-          {/* ฟิลด์ อีเมล - เปิดให้แก้ไข */}
-          <div className="mt-4">
-            <label htmlFor="userEmail" className="block text-sm font-medium text-gray-700">
-              อีเมล
-            </label>
-            <input
-              type="email"
-              id="userEmail"
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
-              value={userEmail}
-              onChange={(e) => setUserEmail(e.target.value)}
-            />
-          </div>
+              <div>
+                <label htmlFor="start_time" className="block text-sm font-medium text-gray-700 mb-1">
+                  เวลาเริ่มต้น *
+                </label>
+                <select
+                  id="start_time"
+                  {...register('start_time')}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  disabled={slotsLoading}
+                >
+                  {slotsLoading ? (
+                    <option>กำลังโหลด...</option>
+                  ) : (
+                    generateTimeOptions(availableSlots).map(option => (
+                      <option key={option.value} value={option.value} disabled={!option.available}>
+                        {option.label} {option.available ? '' : '(ไม่ว่าง)'}
+                      </option>
+                    ))
+                  )}
+                </select>
+                {errors.start_time && <p className="text-red-500 text-xs mt-1">{errors.start_time.message}</p>}
+              </div>
 
-          {/* ฟิลด์ รายละเอียดเพิ่มเติม - เปิดให้แก้ไข */}
-          <div className="mt-4">
-            <label htmlFor="description" className="block text-sm font-medium text-gray-700">
-              รายละเอียดเพิ่มเติม
-            </label>
-            <textarea
-              id="description"
-              rows={3}
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-            ></textarea>
-          </div>
+              <div>
+                <label htmlFor="end_time" className="block text-sm font-medium text-gray-700 mb-1">
+                  เวลาสิ้นสุด *
+                </label>
+                <select
+                  id="end_time"
+                  {...register('end_time')}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  disabled={slotsLoading || !watchStartTime}
+                >
+                  {slotsLoading ? (
+                    <option>กำลังโหลด...</option>
+                  ) : (
+                    generateEndTimeOptions(availableSlots, watchStartTime).map(option => (
+                      <option key={option.value} value={option.value} disabled={!option.available}>
+                        {option.label} {option.available ? '' : '(ไม่ว่าง)'}
+                      </option>
+                    ))
+                  )}
+                </select>
+                {errors.end_time && <p className="text-red-500 text-xs mt-1">{errors.end_time.message}</p>}
+              </div>
+            </div>
 
-          <div className="mt-6 flex justify-end">
-            <button
-              type="button"
-              className="rounded-md border border-gray-300 bg-white py-2 px-4 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
-              onClick={onClose}
-            >
-              ยกเลิก
-            </button>
-            <button
-              type="button"
-              className="ml-3 rounded-md border border-transparent bg-blue-600 py-2 px-4 text-sm font-medium text-white shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
-              onClick={handleSubmit}
-            >
-              บันทึก
-            </button>
-          </div>
-        </Dialog.Panel>
+            <div className="flex justify-end gap-3 pt-4">
+              <button
+                type="button"
+                onClick={onClose}
+                className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
+                disabled={isSubmitting}
+              >
+                ยกเลิก
+              </button>
+              <button
+                type="submit"
+                className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors flex items-center justify-center"
+                disabled={isSubmitting}
+              >
+                {isSubmitting ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                    กำลังบันทึก...
+                  </>
+                ) : (
+                  'บันทึกการแก้ไข'
+                )}
+              </button>
+            </div>
+          </form>
+        </div>
       </div>
-    </Dialog>
+    </div>
   );
 }

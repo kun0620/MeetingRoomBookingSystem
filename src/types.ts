@@ -19,6 +19,7 @@ export type Booking = {
   date: string;
   start_time: string;
   end_time: string;
+  user_id: string; // เพิ่ม user_id
   user_name: string;
   user_email: string;
   user_phone: string;

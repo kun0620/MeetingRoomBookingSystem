@@ -1,8 +1,9 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { User, Booking, Room } from '../types';
 import { useBookings } from '../hooks/useBookings';
 import { useRooms } from '../hooks/useRooms';
 import BookingList from './BookingList';
+import EditBookingModal from './EditBookingModal'; // Import the new modal
 import { Loader2, AlertCircle } from 'lucide-react';
 
 interface UserDashboardProps {
@@ -12,20 +13,44 @@ interface UserDashboardProps {
 }
 
 export default function UserDashboard({ user, onLogout, onBackToMain }: UserDashboardProps) {
-  const { bookings, loading: bookingsLoading, error: bookingsError, cancelBooking } = useBookings();
+  const { bookings, loading: bookingsLoading, error: bookingsError, cancelBooking, updateBooking, refetch: refetchBookings } = useBookings();
   const { rooms, loading: roomsLoading, error: roomsError } = useRooms();
+
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [selectedBooking, setSelectedBooking] = useState<Booking | null>(null);
 
   const userBookings = bookings.filter(booking => booking.user_id === user.id);
 
   const handleCancelBooking = async (bookingId: string) => {
     if (confirm('คุณต้องการยกเลิกการจองนี้หรือไม่?')) {
       try {
-        await cancelBooking(bookingId);
+        await cancelBooking(bookingId); // No departmentCode needed for user's own booking
         alert('ยกเลิกการจองสำเร็จ!');
+        refetchBookings(); // Refetch bookings to update the list
       } catch (error) {
         alert(`เกิดข้อผิดพลาด: ${error instanceof Error ? error.message : 'ไม่สามารถยกเลิกการจองได้'}`);
       }
     }
+  };
+
+  const handleEditBooking = (booking: Booking) => {
+    setSelectedBooking(booking);
+    setShowEditModal(true);
+  };
+
+  const handleSaveEditedBooking = async (bookingId: string, updatedData: Partial<Booking>) => {
+    try {
+      await updateBooking(bookingId, updatedData);
+      alert('แก้ไขการจองสำเร็จ!');
+      refetchBookings(); // Refetch bookings to update the list
+    } catch (error) {
+      throw error; // Re-throw to be caught by the modal's onSubmit
+    }
+  };
+
+  const handleCloseEditModal = () => {
+    setShowEditModal(false);
+    setSelectedBooking(null);
   };
 
   if (bookingsLoading || roomsLoading) {
@@ -42,8 +67,8 @@ export default function UserDashboard({ user, onLogout, onBackToMain }: UserDash
       <div className="flex flex-col items-center justify-center h-64 text-red-600">
         <AlertCircle className="w-8 h-8 mb-3" />
         <p>เกิดข้อผิดพลาดในการโหลดการจอง: {bookingsError || roomsError}</p>
-        <button 
-          onClick={() => window.location.reload()} 
+        <button
+          onClick={() => window.location.reload()}
           className="mt-4 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600"
         >
           รีเฟรชหน้า
@@ -75,6 +100,7 @@ export default function UserDashboard({ user, onLogout, onBackToMain }: UserDash
           bookings={userBookings}
           rooms={rooms}
           onCancelBooking={handleCancelBooking}
+          onEditBooking={handleEditBooking} // Pass the edit handler
           showUserColumn={false} // Don't show user column for user's own dashboard
         />
       ) : (
@@ -87,6 +113,15 @@ export default function UserDashboard({ user, onLogout, onBackToMain }: UserDash
             จองห้องประชุมตอนนี้
           </button>
         </div>
+      )}
+
+      {selectedBooking && showEditModal && (
+        <EditBookingModal
+          booking={selectedBooking}
+          rooms={rooms}
+          onSave={handleSaveEditedBooking}
+          onClose={handleCloseEditModal}
+        />
       )}
     </div>
   );
