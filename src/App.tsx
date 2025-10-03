@@ -16,7 +16,7 @@ import AdminDashboard from './components/admin/AdminDashboard';
 import UserDashboard from './components/UserDashboard';
 import MainLayout from './components/MainLayout';
 import BookingModal from './components/BookingModal';
-import { Loader2, AlertCircle } from 'lucide-react';
+import { Loader as Loader2, CircleAlert as AlertCircle } from 'lucide-react';
 
 function App() {
   const { rooms, loading: roomsLoading, error: roomsError } = useRooms();

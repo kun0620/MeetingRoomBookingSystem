@@ -1,17 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useSystemSettings } from '../../hooks/useSystemSettings';
-import { 
-  Settings, 
-  Palette, 
-  Building2, 
-  Clock, 
-  Save, 
-  RotateCcw, 
-  Loader2,
-  Upload,
-  Eye,
-  EyeOff
-} from 'lucide-react';
+import { Settings, Palette, Building2, Clock, Save, RotateCcw, Loader as Loader2, Upload, Eye, EyeOff } from 'lucide-react';
 
 export default function AdminSystemSettings() {
   const { 
