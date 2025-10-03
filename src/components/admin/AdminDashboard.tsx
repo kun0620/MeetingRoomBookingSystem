@@ -19,6 +19,7 @@ import AdminStats from './AdminStats';
 import AdminDepartments from './AdminDepartments';
 import AdminReports from './AdminReports';
 import AdminAdvancedSearch from './AdminAdvancedSearch';
+import AdminSystemSettings from './AdminSystemSettings';
 
 interface AdminDashboardProps {
   user: User;
@@ -26,7 +27,7 @@ interface AdminDashboardProps {
   onBackToMain: () => void;
 }
 
-type AdminView = 'stats' | 'rooms' | 'bookings' | 'users' | 'departments' | 'reports' | 'search' | 'settings';
+type AdminView = 'stats' | 'rooms' | 'bookings' | 'users' | 'departments' | 'reports' | 'search' | 'system-settings';
 
 export default function AdminDashboard({ user, onLogout, onBackToMain }: AdminDashboardProps) {
   const [currentView, setCurrentView] = useState<AdminView>('stats');
@@ -40,7 +41,7 @@ export default function AdminDashboard({ user, onLogout, onBackToMain }: AdminDa
     { id: 'departments' as AdminView, label: 'จัดการแผนก', icon: Building },
     { id: 'reports' as AdminView, label: 'รายงานและสถิติ', icon: BarChart3 },
     { id: 'search' as AdminView, label: 'ค้นหาขั้นสูง', icon: Search },
-    { id: 'settings' as AdminView, label: 'ตั้งค่า', icon: Settings },
+    { id: 'system-settings' as AdminView, label: 'ตั้งค่าระบบ', icon: Settings },
   ];
 
   const renderContent = () => {
@@ -59,13 +60,8 @@ export default function AdminDashboard({ user, onLogout, onBackToMain }: AdminDa
         return <AdminReports />;
       case 'search':
         return <AdminAdvancedSearch />;
-      case 'settings':
-        return (
-          <div className="bg-white rounded-xl shadow-lg p-6">
-            <h2 className="text-xl font-bold text-gray-800 mb-4">ตั้งค่าระบบ</h2>
-            <p className="text-gray-600">ฟีเจอร์นี้จะพัฒนาในเวอร์ชันถัดไป</p>
-          </div>
-        );
+      case 'system-settings':
+        return <AdminSystemSettings />;
       default:
         return <AdminStats />;
     }
