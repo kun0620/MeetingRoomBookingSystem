@@ -5,6 +5,7 @@ import { formatDate, isPastDate } from './utils/dateUtils';
 import { useRooms } from './hooks/useRooms';
 import { useBookings } from './hooks/useBookings';
 import { useAuth } from './hooks/useAuth';
+import { ThemeProvider } from './components/ThemeProvider';
 import RoomCard from './components/RoomCard';
 import Calendar from './components/Calendar';
 import TimeSlots from './components/TimeSlots';
@@ -15,7 +16,7 @@ import AdminDashboard from './components/admin/AdminDashboard';
 import UserDashboard from './components/UserDashboard';
 import MainLayout from './components/MainLayout';
 import BookingModal from './components/BookingModal';
-import { Loader2, AlertCircle } from 'lucide-react';
+import { Loader as Loader2, CircleAlert as AlertCircle } from 'lucide-react';
 
 function App() {
   const { rooms, loading: roomsLoading, error: roomsError } = useRooms();
@@ -149,77 +150,79 @@ function App() {
 
   // Default rendering for booking and status views, wrapped in MainLayout
   return (
-    <MainLayout
-      viewMode={viewMode}
-      setViewMode={setViewMode}
-      user={user}
-      isAdmin={isAdmin}
-      onLogout={logout}
-      onAdminLoginClick={() => setViewMode('admin')} // Set viewMode to 'admin' to show AdminLogin form
-    >
-      {viewMode === 'booking' ? (
-        <>
-          <section className="mb-8">
-            <h2 className="text-xl font-semibold text-gray-800 mb-6">เลือกห้องประชุม</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {rooms.map(room => (
-                <RoomCard
-                  key={room.id}
-                  room={room}
-                  onSelect={setSelectedRoom}
-                  isSelected={selectedRoom?.id === room.id}
-                  submitting={submitting}
-                />
-              ))}
-            </div>
-          </section>
+    <ThemeProvider>
+      <MainLayout
+        viewMode={viewMode}
+        setViewMode={setViewMode}
+        user={user}
+        isAdmin={isAdmin}
+        onLogout={logout}
+        onAdminLoginClick={() => setViewMode('admin')} // Set viewMode to 'admin' to show AdminLogin form
+      >
+        {viewMode === 'booking' ? (
+          <>
+            <section className="mb-8">
+              <h2 className="text-xl font-semibold text-gray-800 mb-6">เลือกห้องประชุม</h2>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {rooms.map(room => (
+                  <RoomCard
+                    key={room.id}
+                    room={room}
+                    onSelect={setSelectedRoom}
+                    isSelected={selectedRoom?.id === room.id}
+                    submitting={submitting}
+                  />
+                ))}
+              </div>
+            </section>
 
-          {selectedRoom && (
-            <div className="fixed bottom-0 left-0 right-0 bg-transparent p-4 shadow-lg z-30 lg:ml-[290px] flex justify-center">
-              <button
-                onClick={handleProceedToBooking} // Use the new handler
-                className="px-8 py-3 bg-blue-500 border border-blue-500 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium text-lg"
-              >
-                ดำเนินการจองห้อง {selectedRoom.name}
-              </button>
-            </div>
-          )}
+            {selectedRoom && (
+              <div className="fixed bottom-0 left-0 right-0 bg-transparent p-4 shadow-lg z-30 lg:ml-[290px] flex justify-center">
+                <button
+                  onClick={handleProceedToBooking} // Use the new handler
+                  className="px-8 py-3 bg-blue-500 border border-blue-500 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium text-lg"
+                >
+                  ดำเนินการจองห้อง {selectedRoom.name}
+                </button>
+              </div>
+            )}
 
-          {showBookingModal && selectedRoom && (
-            <BookingModal
-              room={selectedRoom}
-              bookings={bookings}
-              onClose={() => setShowBookingModal(false)}
-              onSubmitBooking={handleBookingSubmit}
-              submitting={submitting}
-              user={user} // Pass the user object
-            />
-          )}
-        </>
-      ) : (
-        /* Booking Status View */
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          <div className="lg:col-span-1">
-            <h2 className="text-xl font-semibold text-gray-800 mb-6">ปฏิทินสถานะการจอง</h2>
-            <Calendar
-              selectedDate={selectedDateForStatus}
-              onDateSelect={setSelectedDateForStatus}
-              bookings={bookings} // Pass all bookings to highlight days
-            />
+            {showBookingModal && selectedRoom && (
+              <BookingModal
+                room={selectedRoom}
+                bookings={bookings}
+                onClose={() => setShowBookingModal(false)}
+                onSubmitBooking={handleBookingSubmit}
+                submitting={submitting}
+                user={user} // Pass the user object
+              />
+            )}
+          </>
+        ) : (
+          /* Booking Status View */
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <div className="lg:col-span-1">
+              <h2 className="text-xl font-semibold text-gray-800 mb-6">ปฏิทินสถานะการจอง</h2>
+              <Calendar
+                selectedDate={selectedDateForStatus}
+                onDateSelect={setSelectedDateForStatus}
+                bookings={bookings} // Pass all bookings to highlight days
+              />
+            </div>
+            <div className="lg:col-span-2">
+              <h2 className="text-xl font-semibold text-gray-800 mb-6">
+                การจองสำหรับวันที่ {formatDate(new Date(selectedDateForStatus), 'thai')}
+              </h2>
+              <BookingList
+                bookings={filteredBookingsForStatus} // Pass filtered bookings
+                rooms={rooms}
+                onCancelBooking={handleCancelBooking}
+              />
+            </div>
           </div>
-          <div className="lg:col-span-2">
-            <h2 className="text-xl font-semibold text-gray-800 mb-6">
-              การจองสำหรับวันที่ {formatDate(new Date(selectedDateForStatus), 'thai')}
-            </h2>
-            <BookingList
-              bookings={filteredBookingsForStatus} // Pass filtered bookings
-              rooms={rooms}
-              onCancelBooking={handleCancelBooking}
-            />
-          </div>
-        </div>
-      )}
-    </MainLayout>
+        )}
+      </MainLayout>
+    </ThemeProvider>
   );
 }
 

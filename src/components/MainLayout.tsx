@@ -1,6 +1,7 @@
 import React, { useState, ReactNode } from 'react';
 import { CalendarDays, Building, LineChart, MessageSquare, Settings, LogOut, Home, Menu, X, Users, UserRound } from 'lucide-react';
 import { User, ViewMode } from '../types';
+import { useSystemSettings } from '../hooks/useSystemSettings';
 
 interface MainLayoutProps {
   children: ReactNode;
@@ -22,6 +23,8 @@ export default function MainLayout({
   onAdminLoginClick,
 }: MainLayoutProps) {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const { getBrandingSettings } = useSystemSettings();
+  const brandingSettings = getBrandingSettings();
 
   const menuItems = [
     { id: 'booking', label: 'จองห้อง', icon: CalendarDays },
@@ -47,10 +50,21 @@ export default function MainLayout({
                 <Menu className="w-5 h-5" />
               </button>
               <div className="flex items-center"> {/* Always show app title in header */}
-                <Building className="w-8 h-8 text-blue-500 mr-3" />
+                {brandingSettings.logo_url ? (
+                  <img 
+                    src={brandingSettings.logo_url} 
+                    alt="Logo" 
+                    className="h-8 w-auto mr-3"
+                    onError={(e) => {
+                      e.currentTarget.style.display = 'none';
+                    }}
+                  />
+                ) : (
+                  <Building className="w-8 h-8 text-blue-500 mr-3" />
+                )}
                 <div>
-                  <h1 className="text-2xl font-bold text-gray-900">ระบบจองห้องประชุม</h1>
-                  <p className="text-sm text-gray-500">Meeting Room Booking System</p>
+                  <h1 className="text-2xl font-bold text-gray-900">{brandingSettings.organization_name}</h1>
+                  <p className="text-sm text-gray-500">{brandingSettings.organization_subtitle}</p>
                 </div>
               </div>
             </div>

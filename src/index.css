@@ -2,6 +2,38 @@
 @tailwind components;
 @tailwind utilities;
 
+/* CSS Custom Properties for Theme */
+:root {
+  --color-primary: #3B82F6;
+  --color-secondary: #1E40AF;
+  --color-accent: #10B981;
+  --color-success: #059669;
+  --color-warning: #D97706;
+  --color-error: #DC2626;
+}
+
+/* Theme-aware utility classes */
+.bg-primary { background-color: var(--color-primary); }
+.bg-secondary { background-color: var(--color-secondary); }
+.bg-accent { background-color: var(--color-accent); }
+.bg-success { background-color: var(--color-success); }
+.bg-warning { background-color: var(--color-warning); }
+.bg-error { background-color: var(--color-error); }
+
+.text-primary { color: var(--color-primary); }
+.text-secondary { color: var(--color-secondary); }
+.text-accent { color: var(--color-accent); }
+.text-success { color: var(--color-success); }
+.text-warning { color: var(--color-warning); }
+.text-error { color: var(--color-error); }
+
+.border-primary { border-color: var(--color-primary); }
+.border-secondary { border-color: var(--color-secondary); }
+.border-accent { border-color: var(--color-accent); }
+.border-success { border-color: var(--color-success); }
+.border-warning { border-color: var(--color-warning); }
+.border-error { border-color: var(--color-error); }
+
 /* Custom styles for details element */
 details[open] summary .group-open\:rotate-180 {
   transform: rotate(180deg);

@@ -160,6 +160,38 @@ export interface Database {
           created_at?: string
         }
       }
+      system_settings: {
+        Row: {
+          id: string
+          key: string
+          value: Json
+          category: string
+          description: string | null
+          created_at: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          id?: string
+          key: string
+          value?: Json
+          category?: string
+          description?: string | null
+          created_at?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          id?: string
+          key?: string
+          value?: Json
+          category?: string
+          description?: string | null
+          created_at?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+      }
     }
   }
 }
